@@ -1,6 +1,6 @@
 package w0924;
 
-import java.io.*;
+ import java.io.*;
 
 public class FileCopyTest2 {
 

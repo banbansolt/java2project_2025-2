@@ -1,5 +1,5 @@
 package w0924;
-//RunTime(Unchecked) Exception
+ //RunTime(Unchecked) Exception
 //ArrayIndexOutOfBoundsException
 public class ArrayArithmeticExceptionTest {
 

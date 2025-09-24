@@ -1,6 +1,6 @@
 package w0924;
 //RunTime(Unchecked) Exception
-//ArrayIndexOutOfBoundsException
+ //ArrayIndexOutOfBoundsException
 public class ArrayExceptionTest {
 
     public static void main(String[] args) {
