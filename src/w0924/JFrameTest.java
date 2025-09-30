@@ -1,6 +1,6 @@
 package w0924;
 
-import javax.swing.*;
+ import javax.swing.*;
 
 public class JFrameTest extends JFrame
 {
