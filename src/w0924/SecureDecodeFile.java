@@ -1,33 +1,37 @@
 package w0924;
-import java.io.FileReader;
-import java.io.BufferedReader;
-import java.io.IOException;
 
-public class SecureDecodeFile {// 암호화된 파일을 읽어서 해독 후 콘솔에 출력
+import java.io.*;
+
+public class SecureDecodeFile {
     public static void main(String[] args) {
-        BufferedReader br = null;
-        String line;
+        // 암호화된 파일 경로 (SecureFileTest 에서 만든 경로와 동일하게 맞춤)
+        String inputPath = "D:\\File test/secure1.txt";
+        String outputPath = "D:\\File test/DecodingSecureFile.txt";
 
-        try {
-            br = new BufferedReader(new FileReader("D:\\File test/secure1.txt"));
+        try (
+                FileReader fr = new FileReader(inputPath);
+                BufferedReader br = new BufferedReader(fr);
+                FileWriter fw = new FileWriter(outputPath)
+        ) {
+            String line;
             while ((line = br.readLine()) != null) {
-                String originalStr = "";
+                StringBuilder decodedLine = new StringBuilder();
+
                 for (int i = 0; i < line.length(); i++) {
-                    int code = (int) line.charAt(i);
-                    code -= 100; // 암호화할 때 +100 했으니, 해독할 때 -100
-                    originalStr += (char) code;
+                    int code = line.charAt(i);
+                    code -= 100;  // 암호화 때 +100 했으니 -100 해서 복호화
+                    decodedLine.append((char) code);
                 }
-                System.out.println("Decoding: " + originalStr);
+
+                fw.write(decodedLine.toString() + "\n"); // 줄바꿈 유지
             }
+
+            System.out.println("복호화 완료: " + outputPath);
+
+        } catch (FileNotFoundException e) {
+            System.out.println("암호화된 파일을 찾을 수 없습니다: " + e.getMessage());
         } catch (IOException e) {
-            System.out.println("File Read Error");
-        } finally {
-            try {
-                if (br != null) br.close();
-                System.out.println("Decoding Finished");
-            } catch (IOException e) {
-                System.out.println("Closing File Error");
-            }
+            System.out.println("파일 읽기/쓰기 오류: " + e.getMessage());
         }
     }
 }
