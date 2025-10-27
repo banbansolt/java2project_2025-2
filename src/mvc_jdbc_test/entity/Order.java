@@ -1,5 +1,7 @@
 package mvc_jdbc_test.entity;
 
+import oracle.sql.TIMESTAMP;
+
 import java.util.Date;
 
 public class Order {
