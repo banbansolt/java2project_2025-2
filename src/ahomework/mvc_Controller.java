@@ -7,7 +7,7 @@ import java.sql.Connection;
 
 import jdbc_test.JDBCConnector;
 
-public class Contr {
+public class mvc_Controller {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
@@ -57,16 +57,19 @@ public class Contr {
         Connection con = null;
         try {
             System.out.println("\n-----------------------------------------");
-            System.out.printf("mvc_main%s 로직 실행 시작...%n", (mainNumber == 1 ? "" : "2"));
+            // 👉 로직 실행 메시지 출력
+            System.out.printf("👉 mvc_main%s 로직 실행 시작...%n", (mainNumber == 1 ? "" : "2"));
             con = JDBCConnector.getConnection();
 
             if (con == null) {
-                System.out.println("DB 연결 실패. 로직을 실행할 수 없습니다.");
+                System.out.println("❌ DB 연결 실패. 로직을 실행할 수 없습니다.");
                 return;
             }
 
             if (mainNumber == 1) {
-                System.out.println("   [임시] mvc_main (고객 정보 수정) 로직 실행.");
+                // 💡 수정된 부분: mvc_main 클래스의 updateCustomer 메서드를 호출합니다.
+                mvc_main.updateCustomer(con);
+
             } else if (mainNumber == 2) {
                 mvc_main2.deleteCustomerById(con);
             }
@@ -76,7 +79,8 @@ public class Contr {
         } catch (Exception e) {
             System.out.println("실행 중 예외 발생: " + e.getMessage());
         } finally {
-
+            // DB 연결 닫기 로직이 필요하다면 여기에 추가할 수 있습니다.
+            // if (con != null) { try { con.close(); } catch (SQLException ignore) {} }
         }
     }
 }
