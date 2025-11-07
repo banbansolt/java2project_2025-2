@@ -58,29 +58,27 @@ public class mvc_Controller {
         try {
             System.out.println("\n-----------------------------------------");
             // 👉 로직 실행 메시지 출력
-            System.out.printf("👉 mvc_main%s 로직 실행 시작...%n", (mainNumber == 1 ? "" : "2"));
+            System.out.printf(" mvc_main%s 로직 실행 시작...%n", (mainNumber == 1 ? "" : "2"));
             con = JDBCConnector.getConnection();
 
             if (con == null) {
-                System.out.println("❌ DB 연결 실패. 로직을 실행할 수 없습니다.");
+                System.out.println(" DB 연결 실패. 로직을 실행할 수 없습니다.");
                 return;
             }
 
             if (mainNumber == 1) {
-                // 💡 수정된 부분: mvc_main 클래스의 updateCustomer 메서드를 호출합니다.
                 mvc_main.updateCustomer(con);
 
             } else if (mainNumber == 2) {
                 mvc_main2.deleteCustomerById(con);
             }
 
-            System.out.printf("✅ mvc_main%s 로직 실행 완료%n", (mainNumber == 1 ? "" : "2"));
+            System.out.printf("mvc_main%s 로직 실행 완료%n", (mainNumber == 1 ? "" : "2"));
 
         } catch (Exception e) {
             System.out.println("실행 중 예외 발생: " + e.getMessage());
         } finally {
-            // DB 연결 닫기 로직이 필요하다면 여기에 추가할 수 있습니다.
-            // if (con != null) { try { con.close(); } catch (SQLException ignore) {} }
+
         }
     }
 }
