@@ -57,7 +57,6 @@ public class mvc_Controller {
         Connection con = null;
         try {
             System.out.println("\n-----------------------------------------");
-            // 👉 로직 실행 메시지 출력
             System.out.printf(" mvc_main%s 로직 실행 시작...%n", (mainNumber == 1 ? "" : "2"));
             con = JDBCConnector.getConnection();
 
