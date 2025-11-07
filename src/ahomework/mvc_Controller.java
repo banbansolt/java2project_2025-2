@@ -14,7 +14,7 @@ public class mvc_Controller {
         int choice = -1;
 
         System.out.println("=========================================");
-        System.out.println("        ✨ MVC 프로그램 선택 컨트롤러 ✨");
+        System.out.println("  =====선택 컨트롤러=====" );
         System.out.println("=========================================");
 
         while (choice != 0) {
@@ -39,10 +39,10 @@ public class mvc_Controller {
                         System.out.println("\n프로그램을 종료합니다. 감사합니다.");
                         break;
                     default:
-                        System.out.println("⚠️ [오류] 잘못된 선택입니다. 0, 1, 2 중 하나를 다시 입력하세요.");
+                        System.out.println("잘못된 선택입니다. 0, 1, 2 중 하나를 다시 입력하세요.");
                 }
             } catch (InputMismatchException e) {
-                System.out.println("⚠️ [오류] 숫자를 입력해 주세요.");
+                System.out.println("숫자를 입력해 주세요.");
                 sc.nextLine();
                 choice = -1;
             } catch (Exception e) {
