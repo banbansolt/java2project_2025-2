@@ -115,9 +115,9 @@ public class mvc_main2 {
                 pstmt.close();
 
                 if (rowsAffected > 0) {
-                    System.out.println("✅ 고객아이디 **" + customerIdToDelete + "**의 정보가 성공적으로 삭제되었습니다.");
+                    System.out.println("고객아이디 **" + customerIdToDelete + "**의 정보가 성공적으로 삭제되었습니다.");
                 } else {
-                    System.out.println("⚠️ 고객아이디 **" + customerIdToDelete + "**에 해당하는 고객이 없습니다. 삭제할 정보가 없습니다.");
+                    System.out.println("고객아이디 **" + customerIdToDelete + "**에 해당하는 고객이 없습니다. 삭제할 정보가 없습니다.");
                 }
 
             } catch (SQLException e) {

@@ -91,7 +91,7 @@ public class mvc_main {
         Scanner sc = new Scanner(System.in);
         InputCustomerInfoView inputCustomer = new InputCustomerInfoView();
         while (true){
-            System.out.print("정해진 id 입력후 그 다음은 수정할 단어 작성\n "); // 이 부분은 InputCustomerInfoView의 내부 동작에 따라 달라질 수 있습니다.
+            System.out.print("정해진 id 입력후 그 다음은 수정할 단어 작성\n ");
 
             Customer customer = inputCustomer.inputCustomerInfo();
             CustomerView customerView = new CustomerView();
@@ -99,17 +99,17 @@ public class mvc_main {
             customerView.printCustomer(customer);
             customerView.printFooter();
 
-            // 🌟 고객아이디를 조건으로 등급과 적립금을 수정하는 SQL (INSERT -> UPDATE로 수정)
+
             String sql = "UPDATE 고객 SET 고객이름 = ?, 나이 = ?, 등급 = ?, 직업 = ?, 적립금 = ? WHERE 고객아이디 = ?";
 
             try {
                 PreparedStatement pstmt = con.prepareStatement(sql);
-                // 🌟 파라미터 인덱스와 개수도 UPDATE 문에 맞게 수정
-                pstmt.setString(1, customer.getCustomername()); // 1. 고객이름 (VARCHAR2)
-                pstmt.setInt(2, customer.getAge());             // 2. 나이 (NUMBER)
-                pstmt.setString(3, customer.getLevel());        // 3. 등급 (VARCHAR2)
-                pstmt.setString(4, customer.getJob());          // 4. 직업 (VARCHAR2)
-                pstmt.setInt(5, customer.getReward());          // 적립금
+
+                pstmt.setString(1, customer.getCustomername());
+                pstmt.setInt(2, customer.getAge());
+                pstmt.setString(3, customer.getLevel());
+                pstmt.setString(4, customer.getJob());
+                pstmt.setInt(5, customer.getReward());
                 pstmt.setString(6, customer.getCustomerid());
 
 
