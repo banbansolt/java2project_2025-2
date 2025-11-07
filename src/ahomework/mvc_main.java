@@ -116,9 +116,9 @@ public class mvc_main {
                 int result = pstmt.executeUpdate();
 
                 if (result > 0) {
-                    System.out.println("✅ 고객 정보가 성공적으로 수정되었습니다.");
+                    System.out.println("고객 정보가 성공적으로 수정되었습니다.");
                 } else {
-                    System.out.println("⚠️ 고객아이디에 해당하는 정보가 없어 수정되지 않았습니다.");
+                    System.out.println("고객아이디에 해당하는 정보가 없어 수정되지 않았습니다.");
                 }
 
                 pstmt.close();

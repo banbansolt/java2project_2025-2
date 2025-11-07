@@ -108,7 +108,7 @@ public class mvc_main2 {
             try {
                 PreparedStatement pstmt = con.prepareStatement(sql);
 
-                // 💡 2. 입력받은 ID를 SQL 파라미터에 바인딩
+
                 pstmt.setString(1, customerIdToDelete);
 
                 int rowsAffected = pstmt.executeUpdate();
