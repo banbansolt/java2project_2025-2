@@ -30,10 +30,10 @@ public class mvc_Controller {
 
                 switch (choice) {
                     case 1:
-                        executeMainLogic(1);
+                        MainLogic(1);
                         break;
                     case 2:
-                        executeMainLogic(2);
+                        MainLogic(2);
                         break;
                     case 0:
                         System.out.println("\n프로그램을 종료합니다. 감사합니다.");
@@ -53,7 +53,7 @@ public class mvc_Controller {
     }
 
 
-    private static void executeMainLogic(int mainNumber) {
+    private static void MainLogic(int mainNumber) {
         Connection con = null;
         try {
             System.out.println("\n-----------------------------------------");
