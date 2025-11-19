@@ -1,4 +1,4 @@
-package jdbc_test;
+package bookmanagement.repository;
 
 import java.sql.*;
 
@@ -25,19 +25,19 @@ public class JDBCConnector {
         return con;
     }
     public static void ResultSetTest() {
-    try {
-        String sql = "select * from book, category where book.category = category.category_id";
-        PreparedStatement pstmt = con.prepareStatement(sql);
-        ResultSet rs = pstmt.executeQuery();
-        while (rs.next()) {
-            System.out.print (rs.getString("name") + " || ");
-            System.out.println(rs.getString("publish"));
-            System.out.println();
+        try {
+            String sql = "select * from book, category where book.category = category.category_id";
+            PreparedStatement pstmt = con.prepareStatement(sql);
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                System.out.print (rs.getString("name") + " || ");
+                System.out.println(rs.getString("publish"));
+                System.out.println();
+            }
+        } catch(SQLException e){
+            throw new RuntimeException(e);
         }
-    } catch(SQLException e){
-        throw new RuntimeException(e);
     }
-}
 
 
     public static void main(String[] args) {
