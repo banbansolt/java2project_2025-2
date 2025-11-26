@@ -1,6 +1,7 @@
 package bookmanagement.repository;
 
 import bookmanagement.domain.BookVO;
+import jdbc_test.JDBCConnector;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -8,17 +9,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class BookRepository { // no usages new *
-    ArrayList<BookVO> bookVOList; // 2 usages
-
+public class BookRepository {
+    ArrayList<BookVO> bookVOList;
 
     public ArrayList<BookVO> select(String searchWord, int selectedIndex) {
         Connection con = JDBCConnector.getConnection();
         bookVOList = new ArrayList<BookVO>();
         ResultSet rs = null;
         PreparedStatement psmt = null;
-        String[] columnName = {"name", "publish", "author"};
-        String sql = "select isbn, name, publish, author, price, category_name from book, category where book.category = category.category_id and "+ columnName[selectedIndex] +" like ?";
+        String[] columnNames = {"name", "publish", "author"};
+        String sql = "select isbn, name, publish, author, price, category_name from book, category where book.category = category.category_id and " + columnNames[selectedIndex] + " like ?";
         try {
             psmt = con.prepareStatement(sql);
             psmt.setString(1, "%"+searchWord+"%");
@@ -34,25 +34,71 @@ public class BookRepository { // no usages new *
                 bookVOList.add(bookVO);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-        }finally {
-            try {
-                if (rs != null)
+            System.out.println(e.getMessage());
+        } finally {
+            try{
+                if(rs!=null)
                     rs.close();
 
+                if(psmt!=null)
+                    psmt.close();
+
+                if(con!=null)
+                    con.close();
+            } catch (SQLException e){
+                e.printStackTrace();
+            }
+        }
+
+        return bookVOList;
+    }
+
+    public void insert(BookVO vO) {
+        Connection con = JDBCConnector.getConnection();
+        String sql = "insert into book values(?,?,?,?,?,?)";
+        PreparedStatement psmt = null;
+
+        try {
+            psmt = con.prepareStatement(sql);
+            psmt.setInt(1, vO.getIsbn());
+            psmt.setString(2, vO.getName());
+            psmt.setString(3, vO.getPublish());
+            psmt.setString(4, vO.getAuthor());
+            psmt.setInt(5, vO.getPrice());
+            int categoryId = 0;
+            switch (vO.getCategoryName()) {
+                case "IT도서":
+                    categoryId = 10;
+                    break;
+                case "소설":
+                    categoryId = 20;
+                    break;
+                case "비소설":
+                    categoryId = 30;
+                    break;
+                case "경제":
+                    categoryId = 40;
+                    break;
+                case "사회":
+                    categoryId = 50;
+                    break;
+            }
+            psmt.setInt(6, categoryId);
+            psmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
                 if (psmt != null)
                     psmt.close();
 
-                if(con != null)
+                if (con != null)
                     con.close();
-
             } catch (SQLException e) {
+                System.out.println("insert close 문제 발생");
                 e.printStackTrace();
             }
-
         }
 
-
-        return bookVOList;
     }
 }
