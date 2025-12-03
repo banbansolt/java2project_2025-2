@@ -35,26 +35,22 @@ public class BookUpdateView extends JPanel {
                 panS.add(categoryCombo);
             }
         }
+
         tf[0].setEditable(false);
+
         for (int i = 0; i < 3 ; i++) {
             panS.add(new JLabel(" "));
         }
         panS.add(btnUpdate);
     }
 
-    //table에서 선택한 행의 셀 값들이 텍스트 필드 콤보박스에 설정되게
+    //    table에서 선택한 행의 셀 값들이 텍스트필드 및 콤보박스에 설정되게
     public void setTextField(int rowIndex){
-
-        for(int i =0; i<tf.length; i++){
+        for (int i = 0; i < tf.length; i++) {
             tf[i].setText(model.getValueAt(rowIndex, i).toString());
         }
         categoryCombo.setSelectedItem((String)model.getValueAt(rowIndex, 5));
-
-
     }
-
-
-
 
     //    JTable과 DefaultTableModel을 연결하고 테이블과 관련된 내용을 초기화
     public void initView(){
@@ -85,8 +81,6 @@ public class BookUpdateView extends JPanel {
         add(panS, BorderLayout.SOUTH);
     }
 
-
-
     //    DefaultTableModel에 도서정보들을 설정한다.
     public void putSearchResult(){
 //        model에 행개수 설정
@@ -102,15 +96,14 @@ public class BookUpdateView extends JPanel {
             model.setValueAt(vo.getCategoryName(), i,5);
         }
     }
-    public JButton getBtnAdd() {
-        return btnUpdate;
-    }
+
+
 
     public void setBookVOList(ArrayList<BookVO> bookVOList) {
         this.bookVOList = bookVOList;
     }
 
-    public BookVO neededUpdateData(){
+    public BookVO neededUpdateData() {
         BookVO vo = new BookVO();
         vo.setIsbn(Integer.parseInt(tf[0].getText()));
         vo.setName(tf[1].getText());
@@ -122,7 +115,7 @@ public class BookUpdateView extends JPanel {
     }
 
     public void initUpdateData(){
-        for(int i=0; i<tf.length; i++){
+        for (int i = 0; i < tf.length; i++) {
             tf[i].setText("");
         }
         categoryCombo.setSelectedIndex(0);

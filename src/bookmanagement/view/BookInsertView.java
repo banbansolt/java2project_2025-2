@@ -95,19 +95,19 @@ public class BookInsertView extends JPanel {
         this.bookVOList = bookVOList;
     }
 
-    public BookVO neededInsertData(){
+    public BookVO neededInsertData() {
         BookVO vo = new BookVO();
         vo.setIsbn(Integer.parseInt(tf[0].getText()));
         vo.setName(tf[1].getText());
         vo.setPublish(tf[2].getText());
         vo.setAuthor(tf[3].getText());
         vo.setPrice(Integer.parseInt(tf[4].getText()));
-        vo.setCategoryName((String)(categoryCombo.getSelectedItem()));
+        vo.setCategoryName((String)categoryCombo.getSelectedItem());
         return vo;
     }
 
     public void initInsertData(){
-        for (int i =0; i < tf.length; i++){
+        for (int i = 0; i < tf.length; i++) {
             tf[i].setText("");
         }
         categoryCombo.setSelectedIndex(0);

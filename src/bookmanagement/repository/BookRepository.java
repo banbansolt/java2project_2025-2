@@ -57,7 +57,7 @@ public class BookRepository {
 
     public void insert(BookVO vo) {
         Connection con = JDBCConnector.getConnection();
-        String sql = "update book set name=?, publish=?, author=?, price=?, category=? where isbn=?";
+        String sql = "insert into book values(?,?,?,?,?,?)";
         PreparedStatement psmt = null;
 
         try {
@@ -105,7 +105,6 @@ public class BookRepository {
         }
     }
 
-
     public void update(BookVO vo) {
         Connection con = JDBCConnector.getConnection();
         String sql = "update book set name=?, publish=?, author=?, price=?, category=? where isbn=?";
@@ -132,7 +131,6 @@ public class BookRepository {
                     break;
                 case "사회":
                     categoryId = 50;
-                    break;
             }
             psmt.setInt(5, categoryId);
             psmt.setInt(6, vo.getIsbn());
@@ -155,4 +153,29 @@ public class BookRepository {
         }
     }
 
+    public void delete(BookVO vo) {
+        Connection con = JDBCConnector.getConnection();
+        String sql = "delete from book where isbn=?";
+        PreparedStatement psmt = null;
+        try {
+            psmt =  con.prepareStatement(sql);
+            psmt.setInt(1, vo.getIsbn());
+            psmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+
+                if (psmt != null)
+                    psmt.close();
+
+                if (con != null)
+                    con.close();
+
+            } catch (SQLException e) {
+                System.out.println("delete close 문제 발생");
+                e.printStackTrace();
+            }
+        }
+    }
 }
