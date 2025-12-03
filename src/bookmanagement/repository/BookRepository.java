@@ -1,7 +1,6 @@
 package bookmanagement.repository;
 
 import bookmanagement.domain.BookVO;
-import jdbc_test.JDBCConnector;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -17,8 +16,8 @@ public class BookRepository {
         bookVOList = new ArrayList<BookVO>();
         ResultSet rs = null;
         PreparedStatement psmt = null;
-        String[] columnNames = {"name", "publish", "author"};
-        String sql = "select isbn, name, publish, author, price, category_name from book, category where book.category = category.category_id and " + columnNames[selectedIndex] + " like ?";
+        String[] columnName = {"name", "publish", "author"};
+        String sql = "select isbn, name, publish, author, price, category_name from book, category where book.category = category.category_id and "+ columnName[selectedIndex] +" like ?";
         try {
             psmt = con.prepareStatement(sql);
             psmt.setString(1, "%"+searchWord+"%");
@@ -34,39 +33,42 @@ public class BookRepository {
                 bookVOList.add(bookVO);
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        } finally {
-            try{
-                if(rs!=null)
+            e.printStackTrace();
+        }finally {
+            try {
+                if (rs != null)
                     rs.close();
 
-                if(psmt!=null)
+                if (psmt != null)
                     psmt.close();
 
-                if(con!=null)
+                if(con != null)
                     con.close();
-            } catch (SQLException e){
+
+            } catch (SQLException e) {
                 e.printStackTrace();
             }
+
         }
+
 
         return bookVOList;
     }
 
-    public void insert(BookVO vO) {
+    public void insert(BookVO vo) {
         Connection con = JDBCConnector.getConnection();
-        String sql = "insert into book values(?,?,?,?,?,?)";
+        String sql = "update book set name=?, publish=?, author=?, price=?, category=? where isbn=?";
         PreparedStatement psmt = null;
 
         try {
             psmt = con.prepareStatement(sql);
-            psmt.setInt(1, vO.getIsbn());
-            psmt.setString(2, vO.getName());
-            psmt.setString(3, vO.getPublish());
-            psmt.setString(4, vO.getAuthor());
-            psmt.setInt(5, vO.getPrice());
+            psmt.setInt(1, vo.getIsbn());
+            psmt.setString(2, vo.getName());
+            psmt.setString(3, vo.getPublish());
+            psmt.setString(4, vo.getAuthor());
+            psmt.setInt(5, vo.getPrice());
             int categoryId = 0;
-            switch (vO.getCategoryName()) {
+            switch (vo.getCategoryName()) {
                 case "IT도서":
                     categoryId = 10;
                     break;
@@ -86,19 +88,71 @@ public class BookRepository {
             psmt.setInt(6, categoryId);
             psmt.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } finally {
+            e.printStackTrace();
+        }finally {
             try {
+
                 if (psmt != null)
                     psmt.close();
 
                 if (con != null)
                     con.close();
+
             } catch (SQLException e) {
                 System.out.println("insert close 문제 발생");
                 e.printStackTrace();
             }
         }
-
     }
+
+
+    public void update(BookVO vo) {
+        Connection con = JDBCConnector.getConnection();
+        String sql = "update book set name=?, publish=?, author=?, price=?, category=? where isbn=?";
+        PreparedStatement psmt = null;
+        try {
+            psmt = con.prepareStatement(sql);
+            psmt.setString(1, vo.getName());
+            psmt.setString(2, vo.getPublish());
+            psmt.setString(3, vo.getAuthor());
+            psmt.setInt(4, vo.getPrice());
+            int categoryId = 0;
+            switch (vo.getCategoryName()) {
+                case "IT도서":
+                    categoryId = 10;
+                    break;
+                case "소설":
+                    categoryId = 20;
+                    break;
+                case "비소설":
+                    categoryId = 30;
+                    break;
+                case "경제":
+                    categoryId = 40;
+                    break;
+                case "사회":
+                    categoryId = 50;
+                    break;
+            }
+            psmt.setInt(5, categoryId);
+            psmt.setInt(6, vo.getIsbn());
+            psmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+
+                if (psmt != null)
+                    psmt.close();
+
+                if (con != null)
+                    con.close();
+
+            } catch (SQLException e) {
+                System.out.println("update close 문제 발생");
+                e.printStackTrace();
+            }
+        }
+    }
+
 }

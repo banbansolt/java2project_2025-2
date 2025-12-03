@@ -7,7 +7,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 
-public class BookInsertView extends JPanel {
+public class BookUpdateView extends JPanel {
     JTable table;
     DefaultTableModel model;
     ArrayList<BookVO> bookVOList;
@@ -18,12 +18,12 @@ public class BookInsertView extends JPanel {
     JLabel[] lbls = new JLabel[header.length];
     JTextField[] tf = new JTextField[header.length - 1];
     JComboBox<String> categoryCombo;
-    JButton btnAdd;
+    JButton btnUpdate;
 
-    public BookInsertView(){
+    public BookUpdateView(){
         setLayout(new BorderLayout());
         categoryCombo = new JComboBox(categoryNames);
-        btnAdd = new JButton("도서추가");
+        btnUpdate = new JButton("도서수정");
         panS = new JPanel(new GridLayout(4, 4));
         for (int i = 0; i < header.length; i++) {
             lbls[i] = new JLabel(header[i]);
@@ -35,12 +35,26 @@ public class BookInsertView extends JPanel {
                 panS.add(categoryCombo);
             }
         }
-
+        tf[0].setEditable(false);
         for (int i = 0; i < 3 ; i++) {
             panS.add(new JLabel(" "));
         }
-        panS.add(btnAdd);
+        panS.add(btnUpdate);
     }
+
+    //table에서 선택한 행의 셀 값들이 텍스트 필드 콤보박스에 설정되게
+    public void setTextField(int rowIndex){
+
+        for(int i =0; i<tf.length; i++){
+            tf[i].setText(model.getValueAt(rowIndex, i).toString());
+        }
+        categoryCombo.setSelectedItem((String)model.getValueAt(rowIndex, 5));
+
+
+    }
+
+
+
 
     //    JTable과 DefaultTableModel을 연결하고 테이블과 관련된 내용을 초기화
     public void initView(){
@@ -64,15 +78,17 @@ public class BookInsertView extends JPanel {
         JScrollPane scrollPane = new JScrollPane(table);
 
 //        각 셀에 리스트에 저장된 BookVO객체가 가지고 있는 값들을 설정
-        pubSearchResult();
+        putSearchResult();
 
 //        현재패널에 Center에는 스크롤바가 있는 테이블, South에는 도서추가 패널
         add(scrollPane, BorderLayout.CENTER);
         add(panS, BorderLayout.SOUTH);
     }
 
+
+
     //    DefaultTableModel에 도서정보들을 설정한다.
-    public void pubSearchResult(){
+    public void putSearchResult(){
 //        model에 행개수 설정
         model.setRowCount(bookVOList.size());
         BookVO vo = null;
@@ -86,30 +102,37 @@ public class BookInsertView extends JPanel {
             model.setValueAt(vo.getCategoryName(), i,5);
         }
     }
-
     public JButton getBtnAdd() {
-        return btnAdd;
+        return btnUpdate;
     }
 
     public void setBookVOList(ArrayList<BookVO> bookVOList) {
         this.bookVOList = bookVOList;
     }
 
-    public BookVO neededInsertData(){
+    public BookVO neededUpdateData(){
         BookVO vo = new BookVO();
         vo.setIsbn(Integer.parseInt(tf[0].getText()));
         vo.setName(tf[1].getText());
         vo.setPublish(tf[2].getText());
         vo.setAuthor(tf[3].getText());
         vo.setPrice(Integer.parseInt(tf[4].getText()));
-        vo.setCategoryName((String)(categoryCombo.getSelectedItem()));
+        vo.setCategoryName((String)categoryCombo.getSelectedItem());
         return vo;
     }
 
-    public void initInsertData(){
-        for (int i =0; i < tf.length; i++){
+    public void initUpdateData(){
+        for(int i=0; i<tf.length; i++){
             tf[i].setText("");
         }
         categoryCombo.setSelectedIndex(0);
+    }
+
+    public JButton getBtnUpdate() {
+        return btnUpdate;
+    }
+
+    public JTable getTable() {
+        return table;
     }
 }
