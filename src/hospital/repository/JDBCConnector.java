@@ -1,11 +1,11 @@
-package bookmanagement.repository;
+package hospital.repository;
 
 import java.sql.*;
 
 public class JDBCConnector {
     private static final String DRIVER_PATH = "oracle.jdbc.driver.OracleDriver";
     private static final String URL = "jdbc:oracle:thin:@localhost:1521/xe";
-    private static final String USER_NAME = "C##BOOK";
+    private static final String USER_NAME = "C##MINN";
     private static final String PASSWORD = "1234";
 
     private static Connection con;
