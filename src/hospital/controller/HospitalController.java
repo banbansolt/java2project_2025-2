@@ -186,7 +186,8 @@ public class HospitalController extends JFrame {
                 consultVO.setConsultationDateTime(new Date()); // 현재 시간 기록
 
                 // 3. 진료 기록 삽입
-                int generatedId = consultationRepository.insert(consultVO);
+                consultationRepository.insert(consultVO);
+                int generatedId = 0;
 
                 if (generatedId > 0) {
                     JOptionPane.showMessageDialog(HospitalController.this,
@@ -241,7 +242,7 @@ public class HospitalController extends JFrame {
                 selectedConsultation = consultationVOList.get(row);
 
                 // 처방전 탭으로 정보 전달
-                prescriptionPan.setConsultationInfo(selectedConsultation);
+                prescriptionPan.setSelectedConsultation(selectedConsultation);
 
                 // 탭을 처방전 탭으로 변경 (발행 준비)
                 tab.setSelectedIndex(3);
@@ -254,7 +255,8 @@ public class HospitalController extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             // View에서 선택된 약품 정보를 가져와 처방 상세 테이블에 추가
-            prescriptionPan.addDrugToDetail();
+            // todo 여기부터 해야 됨.
+//            prescriptionPan.addDetail();
         }
     };
 

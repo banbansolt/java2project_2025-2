@@ -1,6 +1,7 @@
 package hospital.repository;
 
 import hospital.domain.PatientVO;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +13,7 @@ public class PatientRepository {
     /**
      * 새로운 환자 정보를 DB에 삽입합니다.
      * DB 스키마(정보, 이름, 생년월일, 주소)에 맞춰 데이터를 삽입합니다.
+     *
      * @param vo 삽입할 PatientVO 객체
      * @return 삽입된 행의 수
      * @throws SQLException DB 접근 오류 발생 시
@@ -59,6 +61,7 @@ public class PatientRepository {
     /**
      * 환자 이름으로 검색하거나, 검색어가 없으면 모든 환자 목록을 조회합니다.
      * ORA-00904 해결을 위해 ORDER BY "정보" 컬럼을 사용합니다.
+     *
      * @param searchName 검색할 환자 이름 (일부만 입력 가능)
      * @return PatientVO 리스트
      */
@@ -68,8 +71,15 @@ public class PatientRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
 
-        // SQL: ORDER BY "정보" 컬럼 사용
-        String sql = "SELECT * FROM \"환자\" WHERE \"이름\" LIKE ? ORDER BY \"정보\"";
+        String sql;
+
+        if (searchName.contains("P")) {
+            sql = "SELECT * FROM \"환자\" WHERE \"정보\" LIKE ? ORDER BY \"정보\"";
+        } else {
+            // SQL: ORDER BY "정보" 컬럼 사용
+            sql = "SELECT * FROM \"환자\" WHERE \"이름\" LIKE ? ORDER BY \"정보\"";
+
+        }
 
         try {
             conn = JDBCConnector.getConnection();
@@ -104,26 +114,41 @@ public class PatientRepository {
         return list;
     }
 
+
     // --- JDBC 자원 관리 헬퍼 메서드 ---
 
-    /** Connection, PreparedStatement, ResultSet을 닫는 정적 메서드 */
+    /**
+     * Connection, PreparedStatement, ResultSet을 닫는 정적 메서드
+     */
     public static void close(Connection conn, PreparedStatement pstmt, ResultSet rs) {
         if (rs != null) {
-            try { rs.close(); } catch (SQLException e) { System.err.println("ResultSet 닫기 오류: " + e.getMessage()); }
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                System.err.println("ResultSet 닫기 오류: " + e.getMessage());
+            }
         }
         if (pstmt != null) {
-            try { pstmt.close(); } catch (SQLException e) { System.err.println("PreparedStatement 닫기 오류: " + e.getMessage()); }
+            try {
+                pstmt.close();
+            } catch (SQLException e) {
+                System.err.println("PreparedStatement 닫기 오류: " + e.getMessage());
+            }
         }
         if (conn != null) {
             try {
-                if (!conn.isClosed()) { conn.close(); }
+                if (!conn.isClosed()) {
+                    conn.close();
+                }
             } catch (SQLException e) {
                 System.err.println("Connection 닫기 오류: " + e.getMessage());
             }
         }
     }
 
-    /** Connection 롤백 정적 메서드 */
+    /**
+     * Connection 롤백 정적 메서드
+     */
     public static void rollback(Connection conn) {
         if (conn != null) {
             try {

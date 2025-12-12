@@ -294,4 +294,6 @@ public class PrescriptionView extends JPanel {
     public void refreshPrescriptionTab() {
         updateConsultationInfoArea();
     }
+
 }
+
