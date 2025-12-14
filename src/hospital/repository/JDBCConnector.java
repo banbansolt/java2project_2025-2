@@ -13,10 +13,10 @@ public class JDBCConnector {
     public static Connection getConnection() {
 
         try {
-//        1. JDBC Driver Memory Loading
+
             Class.forName(DRIVER_PATH);
             System.out.println("JDBC Driver Loaded");
-//        2. Connection
+
             con = DriverManager.getConnection(URL, USER_NAME, PASSWORD);
             System.out.println("Connection Done Successfully");
         } catch (ClassNotFoundException e) {

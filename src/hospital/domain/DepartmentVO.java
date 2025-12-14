@@ -1,11 +1,11 @@
 package hospital.domain;
 
 public class DepartmentVO {
-    private int deptId;   // 부서ID (부서코드, PK)
-    private String deptName; // 부서명
-    private String location; // 부서 위치 (예: 외래동 3층)
+    private int deptId;
+    private String deptName;
+    private String location;
 
-    // Getters and Setters
+
 
     public int getDeptId() {
         return deptId;

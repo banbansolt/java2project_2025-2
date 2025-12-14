@@ -11,51 +11,45 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Date;
-import java.text.SimpleDateFormat; // 날짜 포매팅을 위해 추가
+import java.text.SimpleDateFormat;
 
 public class PrescriptionView extends JPanel {
 
-    // --- UI Components ---
-    private JTextArea consultationInfoArea; // 선택된 진료 정보 표시
-    private JComboBox<String> drugComboBox; // 약품 선택 콤보박스
-    private JTextField dosageField; // 용량 입력 필드
-    private JTextField quantityField; // 수량 입력 필드
-    private JButton btnAddDrug; // 약품 추가 버튼
-    private JButton btnIssuePrescription; // 처방전 발행 완료 버튼
-    private JTable detailTable; // 처방 상세 내역 표시 테이블
+    private JTextArea consultationInfoArea;
+    private JComboBox<String> drugComboBox;
+    private JTextField dosageField;
+    private JTextField quantityField;
+    private JButton btnAddDrug;
+    private JButton btnIssuePrescription;
+    private JTable detailTable;
     private DefaultTableModel detailTableModel;
-    private JLabel totalAmountLabel; // 합계 금액 표시 레이블
-    private JLabel pharmacyIdLabel; // 지정 약국 ID 표시
+    private JLabel totalAmountLabel;
+    private JLabel pharmacyIdLabel;
 
-    // --- Data Fields ---
-    private ConsultationVO selectedConsultation; // 현재 선택된 진료 기록 VO
-    private List<DrugVO> allDrugList; // Controller에서 받은 전체 약품 목록
-    private List<PrescriptionDetailVO> currentPrescriptionDetails; // 현재 처방할 상세 내역 리스트
+    private ConsultationVO selectedConsultation;
+    private List<DrugVO> allDrugList;
+    private List<PrescriptionDetailVO> currentPrescriptionDetails;
 
     public PrescriptionView() {
         setLayout(new BorderLayout(10, 10));
 
-        // 1. Data Fields 초기화
         allDrugList = new ArrayList<>();
         currentPrescriptionDetails = new ArrayList<>();
 
-        // 2. 상단 패널 (선택된 진료 정보)
         consultationInfoArea = new JTextArea("선택된 진료 정보가 없습니다.");
         consultationInfoArea.setEditable(false);
         consultationInfoArea.setPreferredSize(new Dimension(800, 100));
         consultationInfoArea.setBorder(BorderFactory.createTitledBorder("선택된 진료 정보"));
         add(new JScrollPane(consultationInfoArea), BorderLayout.NORTH);
 
-        // 3. 중앙 패널 (약품 선택 및 추가 및 상세 테이블)
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
 
-        // 3-1. 약품 입력 필드 패널
         JPanel inputPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
 
         drugComboBox = new JComboBox<>();
-        dosageField = new JTextField("1", 5); // 용량 기본값
-        quantityField = new JTextField("1", 5); // 수량 기본값
+        dosageField = new JTextField("1", 5);
+        quantityField = new JTextField("1", 5);
         btnAddDrug = new JButton("약품 추가");
 
         inputPanel.add(new JLabel("약품 선택:"));
@@ -68,12 +62,11 @@ public class PrescriptionView extends JPanel {
 
         centerPanel.add(inputPanel);
 
-        // 3-2. 상세 테이블 설정
         String[] columnNames = {"약품코드", "약품명", "용량", "수량", "단위가격", "합계"};
         detailTableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // 테이블 편집 불가 설정
+                return false;
             }
         };
         detailTable = new JTable(detailTableModel);
@@ -83,17 +76,14 @@ public class PrescriptionView extends JPanel {
 
         add(centerPanel, BorderLayout.CENTER);
 
-        // 4. 하단 패널 (합계 및 발행 버튼)
         JPanel southPanel = new JPanel(new BorderLayout());
 
-        // 4-1. 합계 표시 패널
         JPanel totalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         totalAmountLabel = new JLabel("총 합계: 0.0원");
         totalPanel.add(totalAmountLabel);
 
-        // 4-2. 발행 버튼 및 약국 ID 표시 패널
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pharmacyIdLabel = new JLabel("지정 약국 ID:[1]"); // 임시로 ID 1 고정
+        pharmacyIdLabel = new JLabel("지정 약국 ID:[1]");
         btnIssuePrescription = new JButton("처방전 발행 완료");
 
         buttonPanel.add(pharmacyIdLabel);
@@ -104,8 +94,6 @@ public class PrescriptionView extends JPanel {
 
         add(southPanel, BorderLayout.SOUTH);
     }
-
-    // --- 1. Controller가 접근하는 Getter/Setter 메서드 ---
 
     public JButton getBtnIssuePrescription() {
         return btnIssuePrescription;
@@ -119,20 +107,17 @@ public class PrescriptionView extends JPanel {
         return selectedConsultation;
     }
 
-    // 🚨 Controller에서 약품 추가 후 입력 필드를 초기화하기 위한 Getter 추가
     public JTextField getDosageField() {
         return dosageField;
     }
 
-    // 🚨 Controller에서 약품 추가 후 입력 필드를 초기화하기 위한 Getter 추가
     public JTextField getQuantityField() {
         return quantityField;
     }
 
     public void setSelectedConsultation(ConsultationVO consultation) {
         this.selectedConsultation = consultation;
-        updateConsultationInfoArea(); // 정보 영역 업데이트
-        // 새 진료 선택 시 기존 처방 내역 초기화
+        updateConsultationInfoArea();
         clearDetails();
     }
 
@@ -149,11 +134,8 @@ public class PrescriptionView extends JPanel {
         return 1;
     }
 
-    // --- 2. UI 업데이트 및 헬퍼 메서드 ---
-
     private void updateConsultationInfoArea() {
         if (selectedConsultation != null) {
-            // 날짜 포맷팅을 위해 SimpleDateFormat을 사용합니다.
             Date consultationDate = selectedConsultation.getConsultationDateTime();
             String dateStr = (consultationDate != null) ?
                     new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(consultationDate) : "날짜 정보 없음";
@@ -178,13 +160,11 @@ public class PrescriptionView extends JPanel {
         drugComboBox.removeAllItems();
         if (allDrugList != null) {
             for (DrugVO drug : allDrugList) {
-                // 약품명과 코드를 함께 표시
                 drugComboBox.addItem(drug.getDrugName() + " (" + drug.getDrugCode() + ")");
             }
         }
     }
 
-    // 약품 추가 로직 (Controller에서 호출)
     public PrescriptionDetailVO createPrescriptionDetail() {
         if (selectedConsultation == null) {
             JOptionPane.showMessageDialog(this, "먼저 진료 기록을 선택해야 합니다.", "오류", JOptionPane.ERROR_MESSAGE);
@@ -206,13 +186,11 @@ public class PrescriptionView extends JPanel {
                 return null;
             }
 
-            // 콤보박스에서 약품 코드 추출
             String drugCode = selectedItem.substring(
                     selectedItem.indexOf("(") + 1,
                     selectedItem.indexOf(")")
             );
 
-            // 해당 약품 정보를 allDrugList에서 찾기 (Java 8 Optional 사용)
             Optional<DrugVO> drugOpt = allDrugList.stream()
                     .filter(d -> d.getDrugCode().equals(drugCode))
                     .findFirst();
@@ -228,7 +206,6 @@ public class PrescriptionView extends JPanel {
             detail.setDrugCode(drugCode);
             detail.setDosage(dosage);
             detail.setQuantity(quantity);
-            // VO에 단위 가격 및 이름 임시 저장 (테이블 표시용)
             detail.setDrugPrice(selectedDrug.getUnitPrice());
             detail.setDrugName(selectedDrug.getDrugName());
 
@@ -240,9 +217,7 @@ public class PrescriptionView extends JPanel {
         }
     }
 
-    // 처방 상세 내역 추가 및 테이블 업데이트
     public void addDetail(PrescriptionDetailVO detail) {
-        // 중복 추가 방지
         boolean exists = currentPrescriptionDetails.stream()
                 .anyMatch(d -> d.getDrugCode().equals(detail.getDrugCode()));
 
@@ -253,7 +228,6 @@ public class PrescriptionView extends JPanel {
 
         currentPrescriptionDetails.add(detail);
 
-        // 테이블에 행 추가
         double unitPrice = (double) detail.getDrugPrice();
         double totalPrice = unitPrice * detail.getQuantity();
 
@@ -266,10 +240,9 @@ public class PrescriptionView extends JPanel {
                 totalPrice
         });
 
-        updateTotalAmount(); // 합계 업데이트
+        updateTotalAmount();
     }
 
-    // 총 합계 금액 업데이트
     private void updateTotalAmount() {
         double total = currentPrescriptionDetails.stream()
                 .mapToDouble(d -> (double) d.getDrugPrice() * d.getQuantity())
@@ -279,28 +252,16 @@ public class PrescriptionView extends JPanel {
     }
 
 
-    // --- 3. 필수 초기화/클리어 메서드 ---
-
-    /**
-     * 처방전 상세 목록 (currentPrescriptionDetails)과 테이블을 초기화합니다.
-     * HospitalController에서 처방전 발행 완료 후 또는 새 진료 기록 선택 시 호출됩니다.
-     */
     public void clearDetails() {
-        // 1. 내부 데이터 리스트 초기화
         currentPrescriptionDetails.clear();
 
-        // 2. 화면에 보이는 테이블 데이터 초기화
         detailTableModel.setRowCount(0);
 
-        // 3. UI 컴포넌트 초기화
         dosageField.setText("1");
         quantityField.setText("1");
-        updateTotalAmount(); // 합계 0으로 리셋
+        updateTotalAmount();
     }
 
-    /**
-     * 전체 탭 새로고침 시 필요한 초기화 (Controller에서 탭 전환 시 호출)
-     */
     public void refreshPrescriptionTab() {
         updateConsultationInfoArea();
     }

@@ -2,12 +2,12 @@ package hospital.domain;
 
 public class DrugVO {
 
-    private String drugCode;    // 약품코드 (PRIMARY KEY)
-    private String drugName;    // 🚨 필수 추가: 약품명
-    private String manufacturer; // 제조사
-    private int unitPrice;      // 단위가격
+    private String drugCode;
+    private String drugName;
+    private String manufacturer;
+    private int unitPrice;
 
-    // --- Getter and Setter Methods ---
+
 
     public String getDrugCode() {
         return drugCode;
@@ -17,7 +17,7 @@ public class DrugVO {
         this.drugCode = drugCode;
     }
 
-    // 🚨 새로 추가된 Getter/Setter
+
     public String getDrugName() {
         return drugName;
     }
@@ -42,7 +42,7 @@ public class DrugVO {
         this.unitPrice = unitPrice;
     }
 
-    // --- (선택 사항) toString() 오버라이드 ---
+
     @Override
     public String toString() {
         return "DrugVO{" +

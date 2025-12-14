@@ -4,17 +4,16 @@ import java.util.Date;
 
 public class PatientVO {
 
-    // 🚨 residentId 필드 제거
-    private String patientId;        // 환자ID (DB '정보' 컬럼과 타입 일치)
-    private String patientName;      // 환자 이름 (DB '이름')
-    // private String residentId;    // 🚨 제거됨
-    private Date birthDate;          // 생년월일 (DB '생년월일')
-    private String address;          // 주소 (DB '주소')
 
-    // 기본 생성자
+    private String patientId;
+    private String patientName;
+    private Date birthDate;
+    private String address;
+
+
     public PatientVO() {}
 
-    // --- Getter and Setter ---
+
 
     public String getPatientId() {
         return patientId;
@@ -32,7 +31,7 @@ public class PatientVO {
         this.patientName = patientName;
     }
 
-    // 🚨 getResidentId/setResidentId 메서드 제거
+
 
     public Date getBirthDate() {
         return birthDate;
@@ -50,7 +49,7 @@ public class PatientVO {
         this.address = address;
     }
 
-    // getInfo() 메서드
+
     public String getInfo() {
         return "[" + this.patientId + "] " + this.patientName;
     }

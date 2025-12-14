@@ -1,11 +1,11 @@
 package hospital.domain;
 
 public class DoctorVO {
-    private String licenseNumber; // 면허번호 (PK)
+    private String licenseNumber;
     private String name;
-    private Long phoneNumber; // 🚨 Long 타입으로 통일 (DB NUMBER 오버플로우 해결)
-    private int deptId; // 부서ID (FK)
-    private String deptName; // 부서명
+    private Long phoneNumber;
+    private int deptId;
+    private String deptName;
 
     // Getters and Setters
 
@@ -29,7 +29,7 @@ public class DoctorVO {
         return phoneNumber;
     }
 
-    // 🚨 setPhoneNumber 메서드 매개변수도 Long으로 통일 (컴파일 오류 해결)
+
     public void setPhoneNumber(Long phoneNumber) {
         this.phoneNumber = phoneNumber;
     }

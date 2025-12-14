@@ -7,7 +7,7 @@ import java.util.List;
 
 public class DepartmentRepository {
 
-    // 1. 모든 부서 정보 조회 (SELECT)
+
     public List<DepartmentVO> selectAllDepartments() {
         Connection con = JDBCConnector.getConnection();
         List<DepartmentVO> departmentList = new ArrayList<>();
@@ -41,5 +41,4 @@ public class DepartmentRepository {
         return departmentList;
     }
 
-    // TODO: 부서 등록 (INSERT) 등 CRUD 메서드 추가 가능
 }

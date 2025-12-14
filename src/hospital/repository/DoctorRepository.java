@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 public class DoctorRepository {
 
-    // 1. 모든 의사 정보 조회 (SELECT)
     public ArrayList<DoctorVO> selectAllDoctors() {
         Connection con = JDBCConnector.getConnection();
         ArrayList<DoctorVO> doctorList = new ArrayList<>();
@@ -25,7 +24,7 @@ public class DoctorRepository {
                 vo.setLicenseNumber(rs.getString("면허번호"));
                 vo.setName(rs.getString("이름"));
 
-                // 🚨 ORA-17026 오류 해결: rs.getLong() 사용 (DB의 큰 숫자를 Long으로 받음)
+
                 vo.setPhoneNumber(rs.getLong("연락처"));
 
                 vo.setDeptId(rs.getInt("부서ID"));

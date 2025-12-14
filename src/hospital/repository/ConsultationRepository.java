@@ -1,15 +1,13 @@
 package hospital.repository;
 
 import hospital.domain.ConsultationVO;
-// 🚨 JDBCConnector는 프로젝트에 정의된 DB 연결 유틸리티 클래스라고 가정합니다.
-// import util.JDBCConnector;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 
 public class ConsultationRepository {
 
-    // 헬퍼 메서드: DB 자원을 안전하게 해제합니다.
+
     private void closeResources(Connection con, PreparedStatement psmt, ResultSet rs) {
         // ... 기존 로직 유지
         try {
@@ -22,9 +20,7 @@ public class ConsultationRepository {
         }
     }
 
-    /**
-     * 새로운 진료 기록을 DB에 등록하고, 생성된 진료ID를 반환합니다.
-     */
+
     public int insert(ConsultationVO vo) throws SQLException {
         Connection con = null;
         PreparedStatement psmt = null;
@@ -72,9 +68,7 @@ public class ConsultationRepository {
         return generatedId;
     }
 
-    /**
-     * 모든 진료 기록 목록을 환자 이름, 의사 이름과 함께 조회합니다.
-     */
+
     public ArrayList<ConsultationVO> selectAllConsultations() throws SQLException {
         Connection con = null;
         PreparedStatement psmt = null;

@@ -3,17 +3,17 @@ package hospital.domain;
 import java.util.Date;
 
 public class ConsultationVO {
-    private int consultationId; // 진료ID (PK)
-    private String patientInfo; // 환자정보 (FK)
-    private String doctorLicenseNumber; // 의사면허번호 (FK)
-    private Date consultationDateTime; // 진료일시
-    private String diagnosisName; // 진단명
+    private int consultationId;
+    private String patientInfo;
+    private String doctorLicenseNumber;
+    private Date consultationDateTime;
+    private String diagnosisName;
 
-    // 조회를 위한 추가 필드
+
     private String patientName;
     private String doctorName;
 
-    // Getters and Setters
+
 
     public int getConsultationId() {
         return consultationId;

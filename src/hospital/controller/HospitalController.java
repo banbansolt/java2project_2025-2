@@ -18,14 +18,12 @@ import java.util.List;
 
 public class HospitalController extends JFrame {
 
-    // --- 1. View Components ---
     PatientSearchView searchPan;
     PatientInsertView insertPan;
     ConsultationView consultationPan;
     PrescriptionView prescriptionPan;
     PharmacyFulfillmentView fulfillmentPan;
 
-    // --- 2. Repository Components ---
     PatientRepository patientRepository;
     DoctorRepository doctorRepository;
     ConsultationRepository consultationRepository;
@@ -33,31 +31,25 @@ public class HospitalController extends JFrame {
     PrescriptionRepository prescriptionRepository;
     PrescriptionDetailRepository prescriptionDetailRepository;
 
-    // --- 3. Data Lists ---
     ArrayList<PatientVO> patientVOList;
     ArrayList<DoctorVO> doctorVOList;
     ArrayList<ConsultationVO> consultationVOList;
     List<DrugVO> drugVOList;
     ArrayList<PrescriptionVO> fulfillmentList;
 
-    // --- 4. 현재 선택된 환자 및 진료 정보 저장 ---
     private PatientVO selectedPatient;
     private ConsultationVO selectedConsultation;
 
     JTabbedPane tab = new JTabbedPane(JTabbedPane.TOP);
 
-    // 생성자
     public HospitalController() {
-        // --- 4. Repository 초기화 ---
         prescriptionDetailRepository = new PrescriptionDetailRepository();
         patientRepository = new PatientRepository();
         doctorRepository = new DoctorRepository();
         consultationRepository = new ConsultationRepository();
         drugRepository = new DrugRepository();
-        // 🚨 PrescriptionRepository는 PrescriptionDetailRepository를 사용하므로, 생성 순서 조정
         prescriptionRepository = new PrescriptionRepository(prescriptionDetailRepository);
 
-        // --- 5. 탭 구성 및 초기 데이터 로드 ---
         loadInitialData();
 
         searchPan = new PatientSearchView();
@@ -72,26 +64,21 @@ public class HospitalController extends JFrame {
         refreshPrescriptionTab();
         refreshFulfillmentTab();
 
-        // 5-1. 환자 검색
         searchPan.getBtnSearch().addActionListener(btnSearchL);
         tab.add("환자 검색", searchPan);
 
-        // 5-2. 환자 등록
         insertPan.getBtnAdd().addActionListener(btnInsertL);
         tab.add("환자 등록", insertPan);
 
-        // 5-3. 진료 기록
         consultationPan.getBtnStartConsultation().addActionListener(btnStartConsultationL);
         consultationPan.getBtnSearchPatient().addActionListener(btnSearchPatientL);
         consultationPan.getTable().addMouseListener(tableConsultationClickL);
         tab.add("진료 기록", consultationPan);
 
-        // 5-4. 처방전 발행 탭
         prescriptionPan.getBtnAddDrug().addActionListener(btnAddDrugL);
         prescriptionPan.getBtnIssuePrescription().addActionListener(btnIssuePrescriptionL);
         tab.add("처방전 발행", prescriptionPan);
 
-        // 5-5. 약국 이행 관리 탭
         fulfillmentPan.getBtnStartFulfillment().addActionListener(btnStatusUpdateL("조제중"));
         fulfillmentPan.getBtnCompleteFulfillment().addActionListener(btnStatusUpdateL("조제완료"));
         fulfillmentPan.getBtnMarkAsReceived().addActionListener(btnStatusUpdateL("수령완료"));
@@ -99,9 +86,8 @@ public class HospitalController extends JFrame {
         tab.add("약국 이행 관리", fulfillmentPan);
 
 
-        // --- 6. 프레임 설정 ---
         add(tab);
-        tab.addMouseListener(tabL); // 탭 변경 리스너 연결
+        tab.addMouseListener(tabL);
 
         setTitle("병원 관리 시스템");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -111,9 +97,6 @@ public class HospitalController extends JFrame {
         setVisible(true);
     }
 
-    // --- 7. 이벤트 리스너 정의 ---
-
-    // 7-1. 환자 검색 버튼 리스너
     ActionListener btnSearchL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -121,7 +104,6 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-2. 환자 등록 버튼 리스너
     ActionListener btnInsertL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -158,7 +140,6 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-3. 진료 시작 버튼 리스너
     ActionListener btnStartConsultationL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -180,7 +161,6 @@ public class HospitalController extends JFrame {
                 consultVO.setDoctorLicenseNumber(doctor.getLicenseNumber());
                 consultVO.setConsultationDateTime(new Date());
 
-                // Repository에서 generatedId를 반환하도록 수정되었음
                 int generatedId = consultationRepository.insert(consultVO);
 
                 if (generatedId > 0) {
@@ -205,7 +185,6 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-4. 환자 검색 리스너 (진료 탭에서 사용)
     ActionListener btnSearchPatientL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -220,7 +199,6 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-5. 진료 기록 테이블 클릭 리스너
     MouseAdapter tableConsultationClickL = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
@@ -234,7 +212,6 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-6. 약품 추가 버튼 리스너
     ActionListener btnAddDrugL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -249,7 +226,6 @@ public class HospitalController extends JFrame {
     };
 
 
-    // 7-7. 처방전 발행 완료 버튼 리스너 (🚨 최종 구현)
     ActionListener btnIssuePrescriptionL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -267,7 +243,6 @@ public class HospitalController extends JFrame {
                 return;
             }
 
-            // PrescriptionVO 생성 및 설정
             PrescriptionVO prescription = new PrescriptionVO();
             prescription.setConsultationId(consultation.getConsultationId());
             prescription.setPharmacyId(String.valueOf(prescriptionPan.getPharmacyId()));
@@ -275,20 +250,17 @@ public class HospitalController extends JFrame {
             prescription.setFulfillmentStatus("대기");
 
             try {
-                // 🚨 PrescriptionRepository의 트랜잭션 메서드 호출
                 int generatedId = prescriptionRepository.issuePrescription(prescription, details);
 
                 if (generatedId > 0) {
                     JOptionPane.showMessageDialog(HospitalController.this,
                             "처방전 발행 성공 (ID: " + generatedId + ")", "성공", JOptionPane.INFORMATION_MESSAGE);
 
-                    // View 초기화 및 데이터 갱신
                     prescriptionPan.clearDetails();
                     selectedConsultation = null;
 
                     refreshFulfillmentTab();
 
-                    // 약국 이행 관리 탭(index 4)으로 이동
                     tab.setSelectedIndex(4);
 
                 } else {
@@ -304,7 +276,6 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-8. 상태 업데이트 리스너
     private ActionListener btnStatusUpdateL(String status) {
         return new ActionListener() {
             @Override
@@ -350,7 +321,6 @@ public class HospitalController extends JFrame {
         };
     }
 
-    // 7-9. 탭 변경 리스너
     MouseAdapter tabL = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
@@ -376,17 +346,14 @@ public class HospitalController extends JFrame {
     };
 
 
-    // 7-10. 환자 이름으로 처방전 조회 버튼 리스너 (약국 탭)
     ActionListener btnRetrieveByNameL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             String searchName = fulfillmentPan.getSearchName();
 
             try {
-                // Repository를 통해 환자 이름으로 처방전 목록 조회
                 fulfillmentList = prescriptionRepository.selectPrescriptionsByPatientName(searchName);
 
-                // View 갱신
                 fulfillmentPan.setPrescriptionList(fulfillmentList);
                 fulfillmentPan.pubSearchResult();
 
@@ -398,8 +365,6 @@ public class HospitalController extends JFrame {
         }
     };
 
-
-    // --- 8. 데이터 새로고침 메서드 ---
 
     private void refreshPatientSearchTab() {
         String searchName = searchPan.getSearchName();
@@ -459,7 +424,6 @@ public class HospitalController extends JFrame {
         }
     }
 
-    // --- 9. Main 메서드 ---
     public static void main(String[] args) {
         try {
             new HospitalController();

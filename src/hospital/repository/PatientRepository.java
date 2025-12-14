@@ -10,20 +10,11 @@ import java.util.ArrayList;
 
 public class PatientRepository {
 
-    /**
-     * 새로운 환자 정보를 DB에 삽입합니다.
-     * DB 스키마(정보, 이름, 생년월일, 주소)에 맞춰 데이터를 삽입합니다.
-     *
-     * @param vo 삽입할 PatientVO 객체
-     * @return 삽입된 행의 수
-     * @throws SQLException DB 접근 오류 발생 시
-     */
     public int insert(PatientVO vo) throws SQLException {
         Connection conn = null;
         PreparedStatement pstmt = null;
         int count = 0;
 
-        // DB 컬럼명 사용: "정보", "이름", "생년월일", "주소"
         String sql = "INSERT INTO \"환자\" "
                 + "(\"정보\", \"이름\", \"생년월일\", \"주소\") "
                 + "VALUES (?, ?, ?, ?)";
@@ -34,11 +25,9 @@ public class PatientRepository {
 
             pstmt = conn.prepareStatement(sql);
 
-            // 바인딩 변수 설정
             pstmt.setString(1, vo.getPatientId());
             pstmt.setString(2, vo.getPatientName());
 
-            // Date 객체를 java.sql.Date로 변환
             if (vo.getBirthDate() != null) {
                 pstmt.setDate(3, new java.sql.Date(vo.getBirthDate().getTime()));
             } else {
@@ -58,13 +47,7 @@ public class PatientRepository {
     }
 
 
-    /**
-     * 환자 이름으로 검색하거나, 검색어가 없으면 모든 환자 목록을 조회합니다.
-     * ORA-00904 해결을 위해 ORDER BY "정보" 컬럼을 사용합니다.
-     *
-     * @param searchName 검색할 환자 이름 (일부만 입력 가능)
-     * @return PatientVO 리스트
-     */
+
     public ArrayList<PatientVO> select(String searchName) {
         ArrayList<PatientVO> list = new ArrayList<>();
         Connection conn = null;
@@ -76,7 +59,7 @@ public class PatientRepository {
         if (searchName.contains("P")) {
             sql = "SELECT * FROM \"환자\" WHERE \"정보\" LIKE ? ORDER BY \"정보\"";
         } else {
-            // SQL: ORDER BY "정보" 컬럼 사용
+
             sql = "SELECT * FROM \"환자\" WHERE \"이름\" LIKE ? ORDER BY \"정보\"";
 
         }
@@ -93,15 +76,11 @@ public class PatientRepository {
             while (rs.next()) {
                 PatientVO vo = new PatientVO();
 
-                // DB 컬럼명에 맞춰 VO 설정
-                vo.setPatientId(rs.getString("정보")); // DB PK 컬럼: 정보 (String)
-                vo.setPatientName(rs.getString("이름")); // DB 컬럼: 이름
+                vo.setPatientId(rs.getString("정보"));
+                vo.setPatientName(rs.getString("이름"));
 
-                // 🚨 DB에 없는 주민등록번호 조회 로직은 완전히 제외
-                // vo.setResidentId(rs.getString("주민등록번호")); // 이 코드는 제거됨
-
-                vo.setBirthDate(rs.getDate("생년월일")); // DB 컬럼: 생년월일
-                vo.setAddress(rs.getString("주소"));     // DB 컬럼: 주소
+                vo.setBirthDate(rs.getDate("생년월일"));
+                vo.setAddress(rs.getString("주소"));
 
                 list.add(vo);
             }
@@ -115,11 +94,6 @@ public class PatientRepository {
     }
 
 
-    // --- JDBC 자원 관리 헬퍼 메서드 ---
-
-    /**
-     * Connection, PreparedStatement, ResultSet을 닫는 정적 메서드
-     */
     public static void close(Connection conn, PreparedStatement pstmt, ResultSet rs) {
         if (rs != null) {
             try {
@@ -146,9 +120,6 @@ public class PatientRepository {
         }
     }
 
-    /**
-     * Connection 롤백 정적 메서드
-     */
     public static void rollback(Connection conn) {
         if (conn != null) {
             try {
