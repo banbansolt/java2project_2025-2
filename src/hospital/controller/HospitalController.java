@@ -283,18 +283,56 @@ public class HospitalController extends JFrame {
             JOptionPane.showMessageDialog(HospitalController.this, "처방전 발행 성공 (로직 실행)", "성공", JOptionPane.INFORMATION_MESSAGE);
         }
     };
-
-    // 7-8. 상태 업데이트 리스너 (조제중, 조제완료, 수령완료) (구현 필요)
+    // 7-8. 상태 업데이트 리스너 (조제중, 조제완료, 수령완료) (수정됨)
     private ActionListener btnStatusUpdateL(String status) {
         return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // 🚨 약국 이행 상태 업데이트 로직이 실행된다고 가정
-                System.out.println("DEBUG: 약국 이행 상태 업데이트 [" + status + "] 로직 실행됨");
+                // 1. View에서 선택된 처방전 정보 가져오기
+                PrescriptionVO selectedPrescription = fulfillmentPan.getSelectedPrescription();
 
-                // 업데이트 후 갱신
-                refreshFulfillmentTab();
-                JOptionPane.showMessageDialog(HospitalController.this, "상태 업데이트 완료: " + status, "성공", JOptionPane.INFORMATION_MESSAGE);
+                if (selectedPrescription == null) {
+                    // 🚨 수정된 부분: 선택된 행이 없을 경우 명시적으로 경고 메시지를 띄웁니다.
+                    JOptionPane.showMessageDialog(HospitalController.this,
+                            "목록에서 상태를 변경할 처방전을 먼저 선택해주세요.",
+                            "선택 오류",
+                            JOptionPane.WARNING_MESSAGE);
+                    return; // 로직 종료
+                }
+
+                int confirm = JOptionPane.showConfirmDialog(HospitalController.this,
+                        "처방전 ID [" + selectedPrescription.getPrescriptionId() + "]의 상태를 '" + status + "'(으)로 변경하시겠습니까?",
+                        "상태 변경 확인", JOptionPane.YES_NO_OPTION);
+
+                if (confirm == JOptionPane.YES_OPTION) {
+                    try {
+                        // 1. VO 객체에 업데이트할 ID와 상태를 설정
+                        selectedPrescription.setFulfillmentStatus(status);
+
+                        // 2. Repository 호출 시 VO 객체만 전달
+                        int count = prescriptionRepository.updateFulfillmentStatus(selectedPrescription);
+
+                        if (count > 0) {
+                            JOptionPane.showMessageDialog(HospitalController.this,
+                                    "처방전 ID [" + selectedPrescription.getPrescriptionId() + "] 상태 업데이트 완료: " + status,
+                                    "성공", JOptionPane.INFORMATION_MESSAGE);
+
+                            // 3. View 갱신
+                            refreshFulfillmentTab();
+                            fulfillmentPan.updateDetailInfo(selectedPrescription, status);
+
+                        } else {
+                            JOptionPane.showMessageDialog(HospitalController.this,
+                                    "상태 업데이트에 실패했습니다. (DB 삽입 실패)",
+                                    "업데이트 실패", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (SQLException ex) {
+                        JOptionPane.showMessageDialog(HospitalController.this,
+                                "DB 오류: 상태 업데이트 실패\n" + ex.getMessage(),
+                                "오류", JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+                    }
+                }
             }
         };
     }

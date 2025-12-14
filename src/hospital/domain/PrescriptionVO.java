@@ -1,6 +1,8 @@
 package hospital.domain;
 
 import java.util.Date;
+// 🚨 추가: List 사용을 위한 import
+import java.util.List;
 
 public class PrescriptionVO {
 
@@ -13,17 +15,22 @@ public class PrescriptionVO {
     // 🚨 환자 이름을 담기 위한 필드 추가
     private String patientName;          // 환자 이름 (JOIN을 통해 조회)
 
+    // 🚨 핵심 수정: 약품 상세 정보를 담기 위한 리스트 필드 추가
+    private List<PrescriptionDetailVO> drugDetails;
+
     // 기본 생성자
     public PrescriptionVO() {}
 
     // 모든 필드를 포함하는 생성자 (선택 사항)
-    public PrescriptionVO(int prescriptionId, int consultationId, String pharmacyId, Date issueDate, String fulfillmentStatus, String patientName) {
+    // 🚨 생성자 업데이트: drugDetails 필드를 포함하도록 수정
+    public PrescriptionVO(int prescriptionId, int consultationId, String pharmacyId, Date issueDate, String fulfillmentStatus, String patientName, List<PrescriptionDetailVO> drugDetails) {
         this.prescriptionId = prescriptionId;
         this.consultationId = consultationId;
         this.pharmacyId = pharmacyId;
         this.issueDate = issueDate;
         this.fulfillmentStatus = fulfillmentStatus;
-        this.patientName = patientName; // 추가된 필드
+        this.patientName = patientName;
+        this.drugDetails = drugDetails; // 추가된 필드 초기화
     }
 
     // --- Getter and Setter ---
@@ -68,15 +75,24 @@ public class PrescriptionVO {
         this.fulfillmentStatus = fulfillmentStatus;
     }
 
-    // 🚨 추가된 getPatientName() 메서드
+    // 🚨 환자 이름 Getter/Setter
     public String getPatientName() {
         return patientName;
     }
 
-    // 🚨 추가된 setPatientName() 메서드
     public void setPatientName(String patientName) {
         this.patientName = patientName;
     }
+
+    // 🚨 추가된 drugDetails Getter/Setter
+    public List<PrescriptionDetailVO> getDrugDetails() {
+        return drugDetails;
+    }
+
+    public void setDrugDetails(List<PrescriptionDetailVO> drugDetails) {
+        this.drugDetails = drugDetails;
+    }
+
 
     @Override
     public String toString() {
@@ -86,7 +102,8 @@ public class PrescriptionVO {
                 ", pharmacyId='" + pharmacyId + '\'' +
                 ", issueDate=" + issueDate +
                 ", fulfillmentStatus='" + fulfillmentStatus + '\'' +
-                ", patientName='" + patientName + '\'' + // 추가된 필드
+                ", patientName='" + patientName + '\'' +
+                ", drugDetails=" + drugDetails + // 🚨 추가된 필드
                 '}';
     }
 }

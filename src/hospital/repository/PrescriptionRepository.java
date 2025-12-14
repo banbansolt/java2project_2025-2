@@ -1,13 +1,56 @@
 package hospital.repository;
 
 import hospital.domain.PrescriptionVO;
+import hospital.domain.PrescriptionDetailVO; // 🚨 필수 import
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List; // 🚨 필수 import
 
 public class PrescriptionRepository {
+
+    // --- Repositories (데이터 2차 조회를 위해 필요) ---
+    private final PrescriptionDetailRepository prescriptionDetailRepository;
+
+    public PrescriptionRepository() {
+        // PrescriptionDetailRepository 초기화
+        this.prescriptionDetailRepository = new PrescriptionDetailRepository();
+    }
+
+    // --- JDBC 자원 관리 헬퍼 메서드 (기존 유지) ---
+
+    /** Connection, PreparedStatement, ResultSet을 닫는 정적 메서드 */
+    public static void close(Connection conn, PreparedStatement pstmt, ResultSet rs) {
+        if (rs != null) {
+            try { rs.close(); } catch (SQLException e) { System.err.println("ResultSet 닫기 오류: " + e.getMessage()); }
+        }
+        if (pstmt != null) {
+            try { pstmt.close(); } catch (SQLException e) { System.err.println("PreparedStatement 닫기 오류: " + e.getMessage()); }
+        }
+        if (conn != null) {
+            try {
+                // conn이 null이 아니고 닫혀있지 않은 경우에만 닫기 시도
+                if (!conn.isClosed()) { conn.close(); }
+            } catch (SQLException e) {
+                System.err.println("Connection 닫기 오류: " + e.getMessage());
+            }
+        }
+    }
+
+    /** Connection 롤백 정적 메서드 */
+    public static void rollback(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.rollback();
+            } catch (SQLException e) {
+                System.err.println("롤백 오류: " + e.getMessage());
+            }
+        }
+    }
+
+    // --- 핵심 기능 메서드 ---
 
     /**
      * 새로운 처방전 정보를 DB에 삽입하고, 생성된 처방전 ID를 반환합니다.
@@ -21,16 +64,16 @@ public class PrescriptionRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
 
-        // 1. 처방전 삽입 SQL: 처방전ID는 시퀀스 사용 (바인딩 변수 3개)
-        // 🚨 DB 컬럼명에 맞춰 큰따옴표 사용 (Oracle 한글 컬럼명은 대소문자 구분을 위해 따옴표 사용)
+        // 1. 처방전 삽입 SQL
         String insertSql = "INSERT INTO \"처방전\" "
                 + "(\"처방전ID\", \"진료ID\", \"약국ID\", \"발행일\", \"이행상태\") "
-                + "VALUES (SEQ_처방전_ID.NEXTVAL, ?, ?, ?, '발행')"; // 초기 상태는 '발행'
+                + "VALUES (SEQ_처방전_ID.NEXTVAL, ?, ?, ?, '발행')";
 
         // 2. 생성된 시퀀스 ID를 조회하는 SQL
         String currentIdSql = "SELECT SEQ_처방전_ID.CURRVAL FROM DUAL";
 
         try {
+            // 🚨 JDBCConnector.getConnection() 호출 부분은 실제 DB 연결 클래스로 대체해야 합니다.
             conn = JDBCConnector.getConnection();
             if (conn == null) throw new SQLException("DB 연결에 실패했습니다.");
 
@@ -41,6 +84,7 @@ public class PrescriptionRepository {
 
             // 바인딩 변수 설정 (총 3개)
             pstmt.setInt(1, vo.getConsultationId());
+            // 🚨 약국 ID가 String 타입이므로 setString 사용
             pstmt.setString(2, vo.getPharmacyId());
 
             java.sql.Timestamp issueDate = new java.sql.Timestamp(vo.getIssueDate().getTime());
@@ -75,19 +119,18 @@ public class PrescriptionRepository {
 
 
     /**
-     * 모든 처방전 목록을 조회합니다. (환자 이름 포함)
-     * 🚨 ORA-00904 해결: 환자.정보와 진료.환자정보 컬럼을 사용하여 조인합니다.
+     * 모든 처방전 목록을 조회하고, 각 처방전에 연결된 약품 상세 정보(Drug Details)를 로드합니다.
      * @return PrescriptionVO 리스트
      * @throws SQLException DB 접근 오류 발생 시
      */
     public ArrayList<PrescriptionVO> selectAllPrescriptions() throws SQLException {
         ArrayList<PrescriptionVO> list = new ArrayList<>();
 
-        // SQL 수정: 환자(pt)와 진료(c) 테이블을 '정보'/'환자정보' 컬럼으로 조인
-        String sql = "SELECT p.*, pt.\"이름\" AS 환자이름, pt.\"정보\" AS 환자정보ID "
+        // SQL: 환자 이름 조인하여 가져오기
+        String sql = "SELECT p.*, pt.\"이름\" AS 환자이름 "
                 + "FROM \"처방전\" p "
                 + "JOIN \"진료\" c ON p.\"진료ID\" = c.\"진료ID\" "
-                + "JOIN \"환자\" pt ON c.\"환자정보\" = pt.\"정보\" " // 🚨 ORA-00904 해결 지점
+                + "JOIN \"환자\" pt ON c.\"환자정보\" = pt.\"정보\" "
                 + "ORDER BY p.\"발행일\" DESC";
 
         Connection conn = null;
@@ -103,14 +146,18 @@ public class PrescriptionRepository {
 
             while (rs.next()) {
                 PrescriptionVO vo = new PrescriptionVO();
-                vo.setPrescriptionId(rs.getInt("처방전ID"));
+                int prescriptionId = rs.getInt("처방전ID");
+
+                vo.setPrescriptionId(prescriptionId);
                 vo.setConsultationId(rs.getInt("진료ID"));
                 vo.setPharmacyId(rs.getString("약국ID"));
                 vo.setIssueDate(rs.getTimestamp("발행일"));
                 vo.setFulfillmentStatus(rs.getString("이행상태"));
-
-                // 조인된 환자 이름 설정
                 vo.setPatientName(rs.getString("환자이름"));
+
+                // 🚨 핵심 로직: 2차 조회로 약품 상세 정보 로드
+                List<PrescriptionDetailVO> details = prescriptionDetailRepository.selectDetailsByPrescriptionId(prescriptionId);
+                vo.setDrugDetails(details);
 
                 list.add(vo);
             }
@@ -152,35 +199,5 @@ public class PrescriptionRepository {
             close(conn, pstmt, null);
         }
         return count;
-    }
-
-    // --- JDBC 자원 관리 헬퍼 메서드 ---
-
-    /** Connection, PreparedStatement, ResultSet을 닫는 정적 메서드 */
-    public static void close(Connection conn, PreparedStatement pstmt, ResultSet rs) {
-        if (rs != null) {
-            try { rs.close(); } catch (SQLException e) { System.err.println("ResultSet 닫기 오류: " + e.getMessage()); }
-        }
-        if (pstmt != null) {
-            try { pstmt.close(); } catch (SQLException e) { System.err.println("PreparedStatement 닫기 오류: " + e.getMessage()); }
-        }
-        if (conn != null) {
-            try {
-                if (!conn.isClosed()) { conn.close(); }
-            } catch (SQLException e) {
-                System.err.println("Connection 닫기 오류: " + e.getMessage());
-            }
-        }
-    }
-
-    /** Connection 롤백 정적 메서드 */
-    public static void rollback(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.rollback();
-            } catch (SQLException e) {
-                System.err.println("롤백 오류: " + e.getMessage());
-            }
-        }
     }
 }
