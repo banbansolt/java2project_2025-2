@@ -96,7 +96,18 @@ public class PharmacyFulfillmentView extends JPanel {
         JScrollPane detailTableScrollPane = new JScrollPane(detailTable);
 
         JPanel detailPanel = new JPanel(new BorderLayout());
-        detailPanel.setBorder(BorderFactory.createTitledBorder("선택된 처방전 약품 상세 내역"));
+
+        // ************************************************
+        // ******************* 수정된 부분 *******************
+        // "선택된 처방전 약품 상세 내역"이라는 제목이 있는 TitledBorder를 제거합니다.
+        // detailPanel.setBorder(BorderFactory.createTitledBorder("선택된 처방전 약품 상세 내역")); // 원래 코드
+
+        // 단순히 TitledBorder를 없애고 일반 Border나 아무것도 설정하지 않을 수 있습니다.
+        // 여기서는 TitledBorder 대신 일반 LineBorder를 설정하여 영역은 구분하되 제목은 없애겠습니다.
+        // 만약 경계선 자체를 완전히 없애고 싶다면, 아래 라인을 주석 처리하거나 제거하세요.
+        detailPanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+        // ************************************************
+
         detailPanel.add(detailTableScrollPane, BorderLayout.CENTER);
 
 
