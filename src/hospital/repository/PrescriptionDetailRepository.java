@@ -1,7 +1,7 @@
 package hospital.repository;
 
 import hospital.domain.PrescriptionDetailVO;
-// 🚨 JDBCConnector는 프로젝트 내부에 존재하는 DB 연결 관리 클래스라고 가정합니다.
+// 🚨 JDBCConnector는 프로젝트에 정의된 DB 연결 유틸리티 클래스라고 가정합니다.
 // import hospital.repository.JDBCConnector;
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,47 +11,39 @@ public class PrescriptionDetailRepository {
 
     // --- 1. 핵심 기능 메서드 ---
 
+    // 🚨 [추가] 트랜잭션 참여용 메서드: PrescriptionRepository.issuePrescription에서 호출됨
     /**
-     * 새로운 처방 상세 정보를 DB에 배치로 등록합니다.
-     * @param detailList 등록할 PrescriptionDetailVO 리스트
+     * 외부 트랜잭션 (Connection)을 받아 처방 상세 내역을 하나 삽입합니다.
+     * @param conn 외부 트랜잭션에서 받은 Connection
+     * @param vo 삽입할 PrescriptionDetailVO 객체
+     * @throws SQLException DB 오류 발생 시
      */
-    public void insertBatch(List<PrescriptionDetailVO> detailList) {
-        Connection con = null;
-        // 복합키 (처방전ID, 약품코드) 사용
+    public void insertDetail(Connection conn, PrescriptionDetailVO vo) throws SQLException {
+        PreparedStatement pstmt = null;
+
         String sql = "INSERT INTO \"처방상세\" (\"처방전ID\", \"약품코드\", \"용량\", \"수량\") VALUES (?, ?, ?, ?)";
-        PreparedStatement psmt = null;
 
         try {
-            con = JDBCConnector.getConnection();
-            con.setAutoCommit(false); // 배치 처리를 위해 auto-commit 비활성화
-            psmt = con.prepareStatement(sql);
+            // 외부 Connection을 사용하며, 커밋/롤백은 외부(PrescriptionRepository)에서 관리
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, vo.getPrescriptionId());
+            pstmt.setString(2, vo.getDrugCode());
+            pstmt.setString(3, vo.getDosage());
+            pstmt.setInt(4, vo.getQuantity());
 
-            for (PrescriptionDetailVO vo : detailList) {
-                psmt.setInt(1, vo.getPrescriptionId());
-                psmt.setString(2, vo.getDrugCode());
-                psmt.setString(3, vo.getDosage());
-                psmt.setInt(4, vo.getQuantity());
+            pstmt.executeUpdate();
 
-                psmt.addBatch(); // 배치에 추가
-            }
-
-            psmt.executeBatch(); // 배치 실행
-            con.commit(); // 커밋
-
-        } catch (SQLException e) {
-            rollback(con); // 🚨 헬퍼 메서드 호출
-            e.printStackTrace();
         } finally {
-            close(con, psmt, null); // 🚨 헬퍼 메서드 호출
+            // Connection은 닫지 않고, PreparedStatement만 닫음
+            if (pstmt != null) {
+                try { pstmt.close(); } catch (SQLException e) { System.err.println("PreparedStatement 닫기 오류: " + e.getMessage()); }
+            }
         }
     }
 
+
     /**
      * 특정 처방전 ID에 해당하는 모든 약품 상세 정보(약품명 포함)를 조회합니다.
-     * 이 메서드는 PharmacyFulfillmentView에서 약품 목록을 표시할 때 사용됩니다.
-     * * @param prescriptionId 조회할 처방전 ID
-     * @return PrescriptionDetailVO 객체의 리스트
-     * @throws SQLException DB 접근 오류 발생 시
      */
     public List<PrescriptionDetailVO> selectDetailsByPrescriptionId(int prescriptionId) throws SQLException {
         List<PrescriptionDetailVO> detailList = new ArrayList<>();
@@ -59,7 +51,6 @@ public class PrescriptionDetailRepository {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
 
-        // SQL: 처방상세(pd)와 약품(d) 테이블을 조인하여 약품명(약품.약품명)을 가져옴
         String sql = "SELECT pd.*, d.\"약품명\" "
                 + "FROM \"처방상세\" pd "
                 + "JOIN \"약품\" d ON pd.\"약품코드\" = d.\"약품코드\" "
@@ -76,13 +67,10 @@ public class PrescriptionDetailRepository {
             while (rs.next()) {
                 PrescriptionDetailVO vo = new PrescriptionDetailVO();
 
-                // 처방 상세 정보 설정
                 vo.setPrescriptionId(rs.getInt("처방전ID"));
                 vo.setDrugCode(rs.getString("약품코드"));
                 vo.setDosage(rs.getString("용량"));
                 vo.setQuantity(rs.getInt("수량"));
-
-                // 🚨 조인된 약품명 설정
                 vo.setDrugName(rs.getString("약품명"));
 
                 detailList.add(vo);
@@ -97,33 +85,17 @@ public class PrescriptionDetailRepository {
     }
 
 
-    // --- 2. JDBC 자원 관리 헬퍼 메서드 (롤백 오류 해결을 위해 포함) ---
+    // --- 2. JDBC 자원 관리 헬퍼 메서드 (PrescriptionRepository와 동일하게 유지) ---
 
-    /** Connection, PreparedStatement, ResultSet을 닫는 정적 메서드 */
     public static void close(Connection conn, PreparedStatement pstmt, ResultSet rs) {
-        if (rs != null) {
-            try { rs.close(); } catch (SQLException e) { System.err.println("ResultSet 닫기 오류: " + e.getMessage()); }
-        }
-        if (pstmt != null) {
-            try { pstmt.close(); } catch (SQLException e) { System.err.println("PreparedStatement 닫기 오류: " + e.getMessage()); }
-        }
+        if (rs != null) { try { rs.close(); } catch (SQLException e) { System.err.println("ResultSet 닫기 오류: " + e.getMessage()); } }
+        if (pstmt != null) { try { pstmt.close(); } catch (SQLException e) { System.err.println("PreparedStatement 닫기 오류: " + e.getMessage()); } }
         if (conn != null) {
-            try {
-                if (!conn.isClosed()) { conn.close(); }
-            } catch (SQLException e) {
-                System.err.println("Connection 닫기 오류: " + e.getMessage());
-            }
+            try { if (!conn.isClosed()) { conn.close(); } } catch (SQLException e) { System.err.println("Connection 닫기 오류: " + e.getMessage()); }
         }
     }
 
-    /** Connection 롤백 정적 메서드 */
     public static void rollback(Connection conn) {
-        if (conn != null) {
-            try {
-                conn.rollback();
-            } catch (SQLException e) {
-                System.err.println("롤백 오류: " + e.getMessage());
-            }
-        }
+        if (conn != null) { try { conn.rollback(); } catch (SQLException e) { System.err.println("롤백 오류: " + e.getMessage()); } }
     }
 }

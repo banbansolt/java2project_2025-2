@@ -7,11 +7,10 @@ import hospital.view.PatientInsertView;
 import hospital.view.ConsultationView;
 import hospital.view.PrescriptionView;
 import hospital.view.PharmacyFulfillmentView;
-import center_frame.CenterFrame; // CenterFrame 클래스가 존재하는 것으로 가정합니다.
+import center_frame.CenterFrame;
 
 import javax.swing.*;
 import java.awt.event.*;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,60 +42,60 @@ public class HospitalController extends JFrame {
 
     // --- 4. 현재 선택된 환자 및 진료 정보 저장 ---
     private PatientVO selectedPatient;
-    private ConsultationVO selectedConsultation; // 🚨 진료 기록 선택 시 저장
+    private ConsultationVO selectedConsultation;
 
     JTabbedPane tab = new JTabbedPane(JTabbedPane.TOP);
 
     // 생성자
     public HospitalController() {
         // --- 4. Repository 초기화 ---
+        prescriptionDetailRepository = new PrescriptionDetailRepository();
         patientRepository = new PatientRepository();
         doctorRepository = new DoctorRepository();
         consultationRepository = new ConsultationRepository();
         drugRepository = new DrugRepository();
-        prescriptionRepository = new PrescriptionRepository();
-        prescriptionDetailRepository = new PrescriptionDetailRepository();
+        // 🚨 PrescriptionRepository는 PrescriptionDetailRepository를 사용하므로, 생성 순서 조정
+        prescriptionRepository = new PrescriptionRepository(prescriptionDetailRepository);
 
         // --- 5. 탭 구성 및 초기 데이터 로드 ---
         loadInitialData();
 
-        // 🚨 1단계: View 객체를 먼저 생성합니다.
         searchPan = new PatientSearchView();
         insertPan = new PatientInsertView();
         consultationPan = new ConsultationView();
         prescriptionPan = new PrescriptionView();
         fulfillmentPan = new PharmacyFulfillmentView();
 
-        // 🚨 2단계: 생성된 View 객체를 사용하여 데이터를 새로고침합니다.
         refreshPatientSearchTab();
         refreshPatientInsertTab();
-        refreshConsultationTab(); // 초기 진료 기록 로드
+        refreshConsultationTab();
         refreshPrescriptionTab();
         refreshFulfillmentTab();
 
-        // 5-1. 환자 검색 (리스너 연결 확인)
+        // 5-1. 환자 검색
         searchPan.getBtnSearch().addActionListener(btnSearchL);
         tab.add("환자 검색", searchPan);
 
-        // 5-2. 환자 등록 (리스너 연결 확인)
+        // 5-2. 환자 등록
         insertPan.getBtnAdd().addActionListener(btnInsertL);
         tab.add("환자 등록", insertPan);
 
-        // 5-3. 진료 기록 (리스너 연결 확인)
+        // 5-3. 진료 기록
         consultationPan.getBtnStartConsultation().addActionListener(btnStartConsultationL);
         consultationPan.getBtnSearchPatient().addActionListener(btnSearchPatientL);
         consultationPan.getTable().addMouseListener(tableConsultationClickL);
         tab.add("진료 기록", consultationPan);
 
-        // 5-4. 처방전 발행 탭 (리스너 연결 확인)
+        // 5-4. 처방전 발행 탭
         prescriptionPan.getBtnAddDrug().addActionListener(btnAddDrugL);
         prescriptionPan.getBtnIssuePrescription().addActionListener(btnIssuePrescriptionL);
         tab.add("처방전 발행", prescriptionPan);
 
-        // 5-5. 약국 이행 관리 탭 (리스너 연결 확인)
+        // 5-5. 약국 이행 관리 탭
         fulfillmentPan.getBtnStartFulfillment().addActionListener(btnStatusUpdateL("조제중"));
         fulfillmentPan.getBtnCompleteFulfillment().addActionListener(btnStatusUpdateL("조제완료"));
         fulfillmentPan.getBtnMarkAsReceived().addActionListener(btnStatusUpdateL("수령완료"));
+        fulfillmentPan.getBtnRetrieveByName().addActionListener(btnRetrieveByNameL);
         tab.add("약국 이행 관리", fulfillmentPan);
 
 
@@ -106,7 +105,6 @@ public class HospitalController extends JFrame {
 
         setTitle("병원 관리 시스템");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        // CenterFrame은 사용자 프로젝트에 존재한다고 가정
         CenterFrame cf = new CenterFrame(1200, 700);
         cf.centerXY();
         setBounds(cf.getX(), cf.getY(), cf.getFw(), cf.getFh());
@@ -160,22 +158,19 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-3. 진료 시작 버튼 리스너 (구현 완료)
+    // 7-3. 진료 시작 버튼 리스너
     ActionListener btnStartConsultationL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
-                // 1. View에서 진료 정보 가져오기
                 ConsultationVO consultVO = consultationPan.getConsultationVOFromInput();
 
-                // 2. 입력 검사 및 데이터 추가 설정
                 if (consultVO == null || consultVO.getPatientInfo() == null || consultVO.getDiagnosisName().isEmpty()) {
                     JOptionPane.showMessageDialog(HospitalController.this,
                             "환자 선택 및 진단명은 필수입니다.", "입력 오류", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
-                // 🚨 의사 정보 설정 (간단화를 위해 목록의 첫 번째 의사를 사용)
                 if (doctorVOList.isEmpty()) {
                     JOptionPane.showMessageDialog(HospitalController.this,
                             "등록된 의사 정보가 없어 진료를 기록할 수 없습니다.", "오류", JOptionPane.ERROR_MESSAGE);
@@ -183,17 +178,19 @@ public class HospitalController extends JFrame {
                 }
                 DoctorVO doctor = doctorVOList.get(0);
                 consultVO.setDoctorLicenseNumber(doctor.getLicenseNumber());
-                consultVO.setConsultationDateTime(new Date()); // 현재 시간 기록
+                consultVO.setConsultationDateTime(new Date());
 
-                // 3. 진료 기록 삽입
-                consultationRepository.insert(consultVO);
-                int generatedId = 0;
+                // Repository에서 generatedId를 반환하도록 수정되었음
+                int generatedId = consultationRepository.insert(consultVO);
 
                 if (generatedId > 0) {
                     JOptionPane.showMessageDialog(HospitalController.this,
                             "새 진료 기록 등록 완료 (ID: " + generatedId + ")", "성공", JOptionPane.INFORMATION_MESSAGE);
                     consultationPan.clearInput();
-                    refreshConsultationTab(); // 테이블 갱신
+                    refreshConsultationTab();
+                } else {
+                    JOptionPane.showMessageDialog(HospitalController.this,
+                            "진료 기록 등록에 실패했습니다. (DB 삽입 실패)", "오류", JOptionPane.ERROR_MESSAGE);
                 }
 
             } catch (SQLException ex) {
@@ -208,60 +205,43 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-4. 환자 검색 리스너 (진료 탭에서 사용) (구현 완료)
+    // 7-4. 환자 검색 리스너 (진료 탭에서 사용)
     ActionListener btnSearchPatientL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             String searchName = consultationPan.getSearchName();
-
-            // 1. PatientRepository를 통해 환자 목록 검색
             ArrayList<PatientVO> searchedList = patientRepository.select(searchName);
-
-            // 2. 검색 다이얼로그를 띄우고 사용자가 환자를 선택하도록 함 (ConsultationView에 구현되어 있다고 가정)
-            // 🚨 이 부분은 ConsultationView의 showPatientSearchDialog 메서드가 정의되어 있어야 합니다.
             PatientVO selected = consultationPan.showPatientSearchDialog(HospitalController.this, searchedList);
 
             if (selected != null) {
-                // 3. 선택된 환자 정보를 Controller에 저장
                 selectedPatient = selected;
-
-                // 4. ConsultationView에 선택된 환자 정보를 표시하도록 요청
                 consultationPan.setSelectedPatientInfo(selectedPatient);
             }
         }
     };
 
-    // 7-5. 진료 기록 테이블 클릭 리스너 (구현 완료)
+    // 7-5. 진료 기록 테이블 클릭 리스너
     MouseAdapter tableConsultationClickL = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
             int row = consultationPan.getTable().getSelectedRow();
 
             if (row >= 0 && consultationVOList != null && row < consultationVOList.size()) {
-                // 선택된 진료 정보를 리스트에서 가져와 저장
                 selectedConsultation = consultationVOList.get(row);
-
-                // 처방전 탭으로 정보 전달
                 prescriptionPan.setSelectedConsultation(selectedConsultation);
-
-                // 탭을 처방전 탭으로 변경 (발행 준비)
                 tab.setSelectedIndex(3);
             }
         }
     };
 
-    // 7-6. 약품 추가 버튼 리스너 (구현 완료)
+    // 7-6. 약품 추가 버튼 리스너
     ActionListener btnAddDrugL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-            // View에서 선택된 약품 정보를 가져와 처방 상세 테이블에 추가
             PrescriptionDetailVO detail = prescriptionPan.createPrescriptionDetail();
 
             if (detail != null) {
-                // VO 객체를 View의 상세 목록에 추가하고 테이블을 갱신하도록 요청
                 prescriptionPan.addDetail(detail);
-
-                // 입력 필드 초기화 (PrescriptionView에 getter가 추가되었다고 가정)
                 prescriptionPan.getQuantityField().setText("1");
                 prescriptionPan.getDosageField().setText("1");
             }
@@ -269,35 +249,73 @@ public class HospitalController extends JFrame {
     };
 
 
-    // 7-7. 처방전 발행 완료 버튼 리스너 (구현 필요)
+    // 7-7. 처방전 발행 완료 버튼 리스너 (🚨 최종 구현)
     ActionListener btnIssuePrescriptionL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-            // 🚨 처방전 발행 로직은 이전 답변에 상세히 구현되어 있으므로,
-            // 여기서는 간략히 성공 메시지만 출력하고 로직이 실행된다고 가정합니다.
-            System.out.println("DEBUG: 처방전 발행 로직 실행됨");
-            // ... (처방전 발행 및 트랜잭션 로직) ...
+            ConsultationVO consultation = prescriptionPan.getSelectedConsultation();
+            List<PrescriptionDetailVO> details = prescriptionPan.getCurrentPrescriptionDetails();
 
-            // 발행 후 갱신
-            refreshFulfillmentTab();
-            JOptionPane.showMessageDialog(HospitalController.this, "처방전 발행 성공 (로직 실행)", "성공", JOptionPane.INFORMATION_MESSAGE);
+            if (consultation == null) {
+                JOptionPane.showMessageDialog(HospitalController.this,
+                        "처방전 발행을 위한 진료 기록이 선택되지 않았습니다.", "발행 실패", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            if (details.isEmpty()) {
+                JOptionPane.showMessageDialog(HospitalController.this,
+                        "처방할 약품을 최소 하나 이상 추가해야 합니다.", "발행 실패", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // PrescriptionVO 생성 및 설정
+            PrescriptionVO prescription = new PrescriptionVO();
+            prescription.setConsultationId(consultation.getConsultationId());
+            prescription.setPharmacyId(String.valueOf(prescriptionPan.getPharmacyId()));
+            prescription.setIssueDate(new Date());
+            prescription.setFulfillmentStatus("대기");
+
+            try {
+                // 🚨 PrescriptionRepository의 트랜잭션 메서드 호출
+                int generatedId = prescriptionRepository.issuePrescription(prescription, details);
+
+                if (generatedId > 0) {
+                    JOptionPane.showMessageDialog(HospitalController.this,
+                            "처방전 발행 성공 (ID: " + generatedId + ")", "성공", JOptionPane.INFORMATION_MESSAGE);
+
+                    // View 초기화 및 데이터 갱신
+                    prescriptionPan.clearDetails();
+                    selectedConsultation = null;
+
+                    refreshFulfillmentTab();
+
+                    // 약국 이행 관리 탭(index 4)으로 이동
+                    tab.setSelectedIndex(4);
+
+                } else {
+                    JOptionPane.showMessageDialog(HospitalController.this,
+                            "처방전 발행에 실패했습니다. (DB 삽입 실패)", "발행 실패", JOptionPane.ERROR_MESSAGE);
+                }
+
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(HospitalController.this,
+                        "DB 오류: 처방전 발행 실패\n" + ex.getMessage(), "DB 오류", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
         }
     };
-    // 7-8. 상태 업데이트 리스너 (조제중, 조제완료, 수령완료) (수정됨)
+
+    // 7-8. 상태 업데이트 리스너
     private ActionListener btnStatusUpdateL(String status) {
         return new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // 1. View에서 선택된 처방전 정보 가져오기
                 PrescriptionVO selectedPrescription = fulfillmentPan.getSelectedPrescription();
 
                 if (selectedPrescription == null) {
-                    // 🚨 수정된 부분: 선택된 행이 없을 경우 명시적으로 경고 메시지를 띄웁니다.
                     JOptionPane.showMessageDialog(HospitalController.this,
                             "목록에서 상태를 변경할 처방전을 먼저 선택해주세요.",
-                            "선택 오류",
-                            JOptionPane.WARNING_MESSAGE);
-                    return; // 로직 종료
+                            "선택 오류", JOptionPane.WARNING_MESSAGE);
+                    return;
                 }
 
                 int confirm = JOptionPane.showConfirmDialog(HospitalController.this,
@@ -306,10 +324,7 @@ public class HospitalController extends JFrame {
 
                 if (confirm == JOptionPane.YES_OPTION) {
                     try {
-                        // 1. VO 객체에 업데이트할 ID와 상태를 설정
                         selectedPrescription.setFulfillmentStatus(status);
-
-                        // 2. Repository 호출 시 VO 객체만 전달
                         int count = prescriptionRepository.updateFulfillmentStatus(selectedPrescription);
 
                         if (count > 0) {
@@ -317,10 +332,8 @@ public class HospitalController extends JFrame {
                                     "처방전 ID [" + selectedPrescription.getPrescriptionId() + "] 상태 업데이트 완료: " + status,
                                     "성공", JOptionPane.INFORMATION_MESSAGE);
 
-                            // 3. View 갱신
                             refreshFulfillmentTab();
                             fulfillmentPan.updateDetailInfo(selectedPrescription, status);
-
                         } else {
                             JOptionPane.showMessageDialog(HospitalController.this,
                                     "상태 업데이트에 실패했습니다. (DB 삽입 실패)",
@@ -337,31 +350,53 @@ public class HospitalController extends JFrame {
         };
     }
 
-    // 7-9. 탭 변경 리스너 (구현 완료)
+    // 7-9. 탭 변경 리스너
     MouseAdapter tabL = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
             int index = tab.getSelectedIndex();
             switch (index) {
-                case 0: // 환자 검색
+                case 0:
                     refreshPatientSearchTab();
                     break;
-                case 1: // 환자 등록
+                case 1:
                     refreshPatientInsertTab();
                     break;
-                case 2: // 진료 기록
-                    refreshConsultationTab(); // 🚨 진료 기록 탭 클릭 시 데이터 갱신
+                case 2:
+                    refreshConsultationTab();
                     break;
-                case 3: // 처방전 발행
+                case 3:
                     refreshPrescriptionTab();
                     break;
-                case 4: // 약국 이행 관리
+                case 4:
                     refreshFulfillmentTab();
                     break;
             }
         }
     };
 
+
+    // 7-10. 환자 이름으로 처방전 조회 버튼 리스너 (약국 탭)
+    ActionListener btnRetrieveByNameL = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String searchName = fulfillmentPan.getSearchName();
+
+            try {
+                // Repository를 통해 환자 이름으로 처방전 목록 조회
+                fulfillmentList = prescriptionRepository.selectPrescriptionsByPatientName(searchName);
+
+                // View 갱신
+                fulfillmentPan.setPrescriptionList(fulfillmentList);
+                fulfillmentPan.pubSearchResult();
+
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(HospitalController.this,
+                        "처방전 조회 오류: " + ex.getMessage(), "DB 오류", JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        }
+    };
 
 
     // --- 8. 데이터 새로고침 메서드 ---
@@ -376,12 +411,11 @@ public class HospitalController extends JFrame {
     private void refreshPatientInsertTab() {
         patientVOList = patientRepository.select("");
         insertPan.setPatientVOList(patientVOList);
-        insertPan.pubSearchResult(); // 환자 등록 탭에도 목록을 보여주는 기능이 있다고 가정
+        insertPan.pubSearchResult();
     }
 
     private void refreshConsultationTab() {
         try {
-            // 🚨 DB에서 모든 진료 기록을 조회하고,
             consultationVOList = consultationRepository.selectAllConsultations();
         } catch (SQLException ex) {
             System.err.println("진료 기록 조회 오류: " + ex.getMessage());
@@ -390,7 +424,7 @@ public class HospitalController extends JFrame {
 
         consultationPan.setDoctorVOList(doctorVOList);
         consultationPan.setConsultationVOList(consultationVOList);
-        consultationPan.pubSearchResult(); // 🚨 View의 테이블을 갱신합니다.
+        consultationPan.pubSearchResult();
     }
 
     private void refreshPrescriptionTab() {
@@ -401,6 +435,7 @@ public class HospitalController extends JFrame {
             drugVOList = new ArrayList<>();
         }
         prescriptionPan.setAllDrugList(drugVOList);
+        prescriptionPan.refreshPrescriptionTab();
     }
 
     private void refreshFulfillmentTab() {

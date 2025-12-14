@@ -18,8 +18,9 @@ public class PharmacyFulfillmentView extends JPanel {
     // 1-1. 처방전 목록 테이블 (상단)
     private JTable fulfillmentTable;
     private DefaultTableModel model; // 처방전 목록 모델
+    private final String[] header = {"ID", "진료ID", "환자 이름", "발행일", "약국ID", "이행 상태"};
 
-    // 1-2. 🚨 [수정/추가] 약품 상세 정보 테이블 (하단)
+    // 1-2. 약품 상세 정보 테이블 (하단)
     private JTable detailTable;
     private DefaultTableModel detailModel; // 약품 상세 모델
     private final String[] detailHeader = {"약품 코드", "약품명", "수량", "용법"}; // 상세 테이블 헤더
@@ -32,10 +33,11 @@ public class PharmacyFulfillmentView extends JPanel {
     // 1-4. 조회 및 데이터
     private JTextField searchNameField;       // 환자 이름 입력 필드
     private JButton btnRetrieveByName;        // 이름으로 조회 버튼
+    // Controller로부터 받은 현재 표시 중인 처방전 목록
     private ArrayList<PrescriptionVO> currentPrescriptionList;
-    private final String[] header = {"ID", "진료ID", "환자 이름", "발행일", "약국ID", "이행 상태"};
 
 
+    // --- 생성자 ---
     public PharmacyFulfillmentView() {
         setLayout(new BorderLayout());
 
@@ -83,7 +85,7 @@ public class PharmacyFulfillmentView extends JPanel {
         // 테이블 클릭 리스너 연결 (상세 정보 표시용)
         fulfillmentTable.addMouseListener(tableClickL);
 
-        // 3-2. 🚨 [추가] 상세 약품 테이블 설정 (하단)
+        // 3-2. 상세 약품 테이블 설정 (하단)
         detailModel = new DefaultTableModel(detailHeader, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -108,6 +110,10 @@ public class PharmacyFulfillmentView extends JPanel {
 
     // --- 4. Controller 연동을 위한 필수 Getter/Setter/Method ---
 
+    /**
+     * Controller로부터 처방전 목록을 받아 내부 변수에 저장합니다.
+     * @param list DB에서 조회된 처방전 목록 (PrescriptionVO)
+     */
     public void setPrescriptionList(ArrayList<PrescriptionVO> list) {
         this.currentPrescriptionList = list;
         // 목록이 새로 로드되면 상세 테이블 초기화
@@ -116,6 +122,7 @@ public class PharmacyFulfillmentView extends JPanel {
 
     /**
      * 처방전 목록 JTable 자체를 Controller에 넘겨주어 MouseListener를 연결할 수 있도록 합니다.
+     * (현재는 View 내부에서 MouseListener를 처리하므로 주로 선택된 VO를 얻는 용도로 사용됨)
      */
     public JTable getTable() {
         return fulfillmentTable;
@@ -126,9 +133,13 @@ public class PharmacyFulfillmentView extends JPanel {
      */
     public PrescriptionVO getSelectedPrescription() {
         int row = fulfillmentTable.getSelectedRow();
+
+        // 선택된 행이 없고, 목록이 유효한지 확인
         if (row == -1 || currentPrescriptionList == null || row >= currentPrescriptionList.size()) {
             return null;
         }
+
+        // JTable의 선택 인덱스가 currentPrescriptionList의 인덱스와 일치한다고 가정
         return currentPrescriptionList.get(row);
     }
 
@@ -141,25 +152,26 @@ public class PharmacyFulfillmentView extends JPanel {
 
         if (currentPrescriptionList != null) {
             for (PrescriptionVO vo : currentPrescriptionList) {
+                // 약국ID가 null일 경우 '미지정'으로 표시 (DB 스키마에 따라 처리)
                 String pharmacyIdStr = (vo.getPharmacyId() != null) ? String.valueOf(vo.getPharmacyId()) : "미지정";
 
                 model.addRow(new Object[]{
                         String.valueOf(vo.getPrescriptionId()),
                         String.valueOf(vo.getConsultationId()),
-                        vo.getPatientName(),
+                        vo.getPatientName(), // PrescriptionVO에 환자 이름 필드가 있어야 함
                         sdf.format(vo.getIssueDate()),
                         pharmacyIdStr,
                         vo.getFulfillmentStatus()
                 });
             }
         }
-        // 목록 갱신 시 상세 정보 초기화
+        // 목록 갱신 시 상세 정보 테이블 초기화 (데이터 무결성 유지)
         detailModel.setRowCount(0);
     }
 
     /**
-     * 🚨 [수정] 선택된 처방전의 상세 정보를 하단 JTable에 표시합니다.
-     * @param vo 표시할 처방전 VO (null이면 초기화)
+     * 선택된 처방전의 상세 정보를 하단 JTable에 표시합니다.
+     * @param vo 표시할 처방전 VO (내부에 List<PrescriptionDetailVO> 포함)
      */
     public void displayDetails(PrescriptionVO vo) {
         detailModel.setRowCount(0); // 기존 상세 데이터 삭제
@@ -168,36 +180,36 @@ public class PharmacyFulfillmentView extends JPanel {
             return;
         }
 
+        // PrescriptionVO에 getDrugDetails() 메서드가 구현되어 있다고 가정
         List<PrescriptionDetailVO> details = vo.getDrugDetails();
 
         if (details != null && !details.isEmpty()) {
             for (PrescriptionDetailVO detail : details) {
                 detailModel.addRow(new Object[]{
                         detail.getDrugCode(),
-                        detail.getDrugName(),
+                        detail.getDrugName(), // PrescriptionDetailVO에 약품명이 포함되어야 함
                         detail.getQuantity(),
                         detail.getDosage()
                 });
             }
         } else {
-            // 상세 정보가 없을 경우 메시지를 추가
+            // 상세 정보가 없을 경우 안내 메시지 추가
             detailModel.addRow(new Object[]{"", "[처방된 약품 없음]", "", ""});
         }
     }
 
     /**
      * 상태 업데이트 버튼 클릭 시, JTable의 상태 컬럼만 즉시 갱신합니다.
+     * (Controller의 pubSearchResult 호출이 완료된 후에만 사용하는 것이 권장됨)
      * @param vo 업데이트된 PrescriptionVO 객체
      * @param newStatus 새로운 상태 문자열
      */
     public void updateDetailInfo(PrescriptionVO vo, String newStatus) {
-        // 이 메서드는 상태 업데이트 후 목록을 갱신하기 위해 Controller에서 호출됩니다.
-        // pubSearchResult가 전체 목록을 갱신하므로 이 메서드는 테이블 목록의 상태만 갱신하는 용도로 변경합니다.
-
         if (vo == null || newStatus == null) return;
 
-        // 목록 테이블에서 해당 ID를 찾아 상태만 변경
+        // 목록 테이블에서 해당 처방전 ID를 찾아 상태 컬럼(인덱스 5)만 변경
         for (int i = 0; i < model.getRowCount(); i++) {
+            // 모델의 0번째 컬럼(처방전 ID)과 업데이트 대상 ID 비교
             if (model.getValueAt(i, 0).equals(String.valueOf(vo.getPrescriptionId()))) {
                 model.setValueAt(newStatus, i, 5); // 5번째 컬럼(이행 상태) 업데이트
                 break;
@@ -206,20 +218,26 @@ public class PharmacyFulfillmentView extends JPanel {
     }
 
 
+    // --- 5. 이벤트 리스너 정의 ---
+
     // 테이블 클릭 리스너: 선택된 처방전 정보를 하단 영역에 표시
     MouseAdapter tableClickL = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
+            // 더블 클릭 방지 로직은 생략하고, 싱글 클릭 시 바로 처리
             PrescriptionVO selected = getSelectedPrescription();
             if (selected != null) {
-                // 🚨 JTable에 상세 정보를 표시하는 메서드 호출
+                // 선택된 처방전의 상세 정보를 하단 테이블에 표시
                 displayDetails(selected);
+            } else {
+                // 선택 해제 시 상세 테이블 초기화
+                detailModel.setRowCount(0);
             }
         }
     };
 
 
-    // --- 5. Controller 연동용 Getter 메서드 ---
+    // --- 6. Controller 연동용 Getter 메서드 ---
 
     public JButton getBtnStartFulfillment() {
         return btnStartFulfillment;
