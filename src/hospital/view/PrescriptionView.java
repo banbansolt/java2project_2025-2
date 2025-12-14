@@ -10,7 +10,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Date; // Date 포매팅을 위해 필요
+import java.util.Date;
+import java.text.SimpleDateFormat; // 날짜 포매팅을 위해 추가
 
 public class PrescriptionView extends JPanel {
 
@@ -23,13 +24,13 @@ public class PrescriptionView extends JPanel {
     private JButton btnIssuePrescription; // 처방전 발행 완료 버튼
     private JTable detailTable; // 처방 상세 내역 표시 테이블
     private DefaultTableModel detailTableModel;
-    private JLabel totalAmountLabel; // 합계 금액 표시 레이블 (추가)
-    private JLabel pharmacyIdLabel; // 지정 약국 ID 표시 (임시: ID 1로 고정 가정)
+    private JLabel totalAmountLabel; // 합계 금액 표시 레이블
+    private JLabel pharmacyIdLabel; // 지정 약국 ID 표시
 
     // --- Data Fields ---
     private ConsultationVO selectedConsultation; // 현재 선택된 진료 기록 VO
     private List<DrugVO> allDrugList; // Controller에서 받은 전체 약품 목록
-    private List<PrescriptionDetailVO> currentPrescriptionDetails; // 현재 처방할 상세 내역 리스트 (Controller에서 필요)
+    private List<PrescriptionDetailVO> currentPrescriptionDetails; // 현재 처방할 상세 내역 리스트
 
     public PrescriptionView() {
         setLayout(new BorderLayout(10, 10));
@@ -118,6 +119,16 @@ public class PrescriptionView extends JPanel {
         return selectedConsultation;
     }
 
+    // 🚨 Controller에서 약품 추가 후 입력 필드를 초기화하기 위한 Getter 추가
+    public JTextField getDosageField() {
+        return dosageField;
+    }
+
+    // 🚨 Controller에서 약품 추가 후 입력 필드를 초기화하기 위한 Getter 추가
+    public JTextField getQuantityField() {
+        return quantityField;
+    }
+
     public void setSelectedConsultation(ConsultationVO consultation) {
         this.selectedConsultation = consultation;
         updateConsultationInfoArea(); // 정보 영역 업데이트
@@ -142,10 +153,10 @@ public class PrescriptionView extends JPanel {
 
     private void updateConsultationInfoArea() {
         if (selectedConsultation != null) {
-            // 날짜 포맷팅을 위해 java.util.Date를 사용합니다.
+            // 날짜 포맷팅을 위해 SimpleDateFormat을 사용합니다.
             Date consultationDate = selectedConsultation.getConsultationDateTime();
             String dateStr = (consultationDate != null) ?
-                    String.format("%tF %tT", consultationDate, consultationDate) : "날짜 정보 없음";
+                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(consultationDate) : "날짜 정보 없음";
 
             String info = String.format(
                     "진료 ID: %d | 환자: %s(%s) | 의사: %s(%s) | 진단명: %s | 진료 일시: %s",
@@ -176,7 +187,6 @@ public class PrescriptionView extends JPanel {
     // 약품 추가 로직 (Controller에서 호출)
     public PrescriptionDetailVO createPrescriptionDetail() {
         if (selectedConsultation == null) {
-            // 이 경고는 Controller에서 이미 처리하지만, View에서도 방어 코드를 남겨둡니다.
             JOptionPane.showMessageDialog(this, "먼저 진료 기록을 선택해야 합니다.", "오류", JOptionPane.ERROR_MESSAGE);
             return null;
         }
@@ -296,4 +306,3 @@ public class PrescriptionView extends JPanel {
     }
 
 }
-

@@ -250,13 +250,21 @@ public class HospitalController extends JFrame {
         }
     };
 
-    // 7-6. 약품 추가 버튼 리스너 (구현 필요)
+    // 7-6. 약품 추가 버튼 리스너 (구현 완료)
     ActionListener btnAddDrugL = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             // View에서 선택된 약품 정보를 가져와 처방 상세 테이블에 추가
-            // todo 여기부터 해야 됨.
-//            prescriptionPan.addDetail();
+            PrescriptionDetailVO detail = prescriptionPan.createPrescriptionDetail();
+
+            if (detail != null) {
+                // VO 객체를 View의 상세 목록에 추가하고 테이블을 갱신하도록 요청
+                prescriptionPan.addDetail(detail);
+
+                // 입력 필드 초기화 (PrescriptionView에 getter가 추가되었다고 가정)
+                prescriptionPan.getQuantityField().setText("1");
+                prescriptionPan.getDosageField().setText("1");
+            }
         }
     };
 
