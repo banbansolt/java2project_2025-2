@@ -362,6 +362,8 @@ public class HospitalController extends JFrame {
         }
     };
 
+
+
     // --- 8. 데이터 새로고침 메서드 ---
 
     private void refreshPatientSearchTab() {

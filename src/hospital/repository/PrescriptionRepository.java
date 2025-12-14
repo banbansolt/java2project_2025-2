@@ -1,13 +1,15 @@
 package hospital.repository;
 
 import hospital.domain.PrescriptionVO;
-import hospital.domain.PrescriptionDetailVO; // 🚨 필수 import
+import hospital.domain.PrescriptionDetailVO;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List; // 🚨 필수 import
+import java.util.List;
+// 🚨 [가정] JDBCConnector는 프로젝트에 정의된 DB 연결 유틸리티 클래스입니다.
+// import util.JDBCConnector;
 
 public class PrescriptionRepository {
 
@@ -145,20 +147,7 @@ public class PrescriptionRepository {
             rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                PrescriptionVO vo = new PrescriptionVO();
-                int prescriptionId = rs.getInt("처방전ID");
-
-                vo.setPrescriptionId(prescriptionId);
-                vo.setConsultationId(rs.getInt("진료ID"));
-                vo.setPharmacyId(rs.getString("약국ID"));
-                vo.setIssueDate(rs.getTimestamp("발행일"));
-                vo.setFulfillmentStatus(rs.getString("이행상태"));
-                vo.setPatientName(rs.getString("환자이름"));
-
-                // 🚨 핵심 로직: 2차 조회로 약품 상세 정보 로드
-                List<PrescriptionDetailVO> details = prescriptionDetailRepository.selectDetailsByPrescriptionId(prescriptionId);
-                vo.setDrugDetails(details);
-
+                PrescriptionVO vo = createPrescriptionVO(rs);
                 list.add(vo);
             }
         } catch (SQLException e) {
@@ -199,5 +188,72 @@ public class PrescriptionRepository {
             close(conn, pstmt, null);
         }
         return count;
+    }
+
+    // 🚨 [신규 추가] 특정 환자 ID로 처방전 목록을 조회하는 메서드
+    /**
+     * 특정 환자 ID로 처방전 목록을 조회하고 상세 정보를 로드합니다.
+     * @param patientId 검색할 환자 ID
+     * @return PrescriptionVO 리스트
+     * @throws SQLException DB 접근 오류 발생 시
+     */
+    public ArrayList<PrescriptionVO> selectPrescriptionsByPatientId(String patientId) throws SQLException {
+        ArrayList<PrescriptionVO> list = new ArrayList<>();
+
+        // SQL: 환자 테이블을 조인하여 환자 ID를 조건으로 사용
+        String sql = "SELECT p.*, pt.\"이름\" AS 환자이름 "
+                + "FROM \"처방전\" p "
+                + "JOIN \"진료\" c ON p.\"진료ID\" = c.\"진료ID\" "
+                + "JOIN \"환자\" pt ON c.\"환자정보\" = pt.\"정보\" "
+                + "WHERE pt.\"정보\" = ? " // 🚨 환자 ID 조건 (pt."정보"는 환자 ID 필드로 가정)
+                + "ORDER BY p.\"발행일\" DESC";
+
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = JDBCConnector.getConnection();
+            if (conn == null) throw new SQLException("DB 연결에 실패했습니다.");
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, patientId); // 환자 ID 바인딩
+
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                PrescriptionVO vo = createPrescriptionVO(rs);
+                list.add(vo);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw e;
+        } finally {
+            close(conn, pstmt, rs);
+        }
+        return list;
+    }
+
+    // 🚨 [신규 추가] ResultSet에서 VO 객체를 생성하는 유틸리티 메서드
+    /**
+     * ResultSet에서 데이터를 읽어 PrescriptionVO 객체를 생성하고 약품 상세 정보를 로드합니다.
+     * selectAllPrescriptions와 selectPrescriptionsByPatientId 메서드 간의 코드 중복을 제거합니다.
+     */
+    private PrescriptionVO createPrescriptionVO(ResultSet rs) throws SQLException {
+        PrescriptionVO vo = new PrescriptionVO();
+        int prescriptionId = rs.getInt("처방전ID");
+
+        vo.setPrescriptionId(prescriptionId);
+        vo.setConsultationId(rs.getInt("진료ID"));
+        vo.setPharmacyId(rs.getString("약국ID"));
+        vo.setIssueDate(rs.getTimestamp("발행일"));
+        vo.setFulfillmentStatus(rs.getString("이행상태"));
+        vo.setPatientName(rs.getString("환자이름")); // JOIN으로 가져온 환자 이름 설정
+
+        // 2차 조회: 약품 상세 정보 로드
+        List<PrescriptionDetailVO> details = prescriptionDetailRepository.selectDetailsByPrescriptionId(prescriptionId);
+        vo.setDrugDetails(details);
+
+        return vo;
     }
 }
